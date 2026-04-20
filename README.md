@@ -98,7 +98,7 @@ The intake writes these files for you. If you already have a Book of your own, s
 
 ## What you'll see
 
-**Dashboard** — A table of all evaluated roles, color-coded by score (green 15+, yellow 12-14, red below 12). Filter by status.
+**Dashboard** — A catalog of every evaluated role, with the strongest fits (total score 15+) drawn in stamp red so your eye finds them first and the rest set in ordinary ink. Filter by status or company.
 
 **Evaluate** — Paste a job posting, get a 6-dimension breakdown with rationale for each score, matched signal/red flag words, a fit summary, and a resume version recommendation.
 
@@ -106,7 +106,7 @@ The intake writes these files for you. If you already have a Book of your own, s
 
 **Materials** — Click "Draft Materials" on any role to generate a cover letter and resume that follow your Playbook rules. Export ATS-friendly PDFs. In full mode, generates a complete two-page resume. In summary mode, generates a cover letter and summary, then combines the summary with your base resume.
 
-**Applications** — Track submitted applications with status (Submitted, Phone Screen, Interview, Take Home, Offer, Rejected, Withdrawn), resume version used, and notes.
+**Applications** — Track submitted applications with status (Applied, Interviewing, Offer, Rejected, Ghosted, Withdrawn), resume version used, and notes. Ghosted is a first-class status since that's the most common outcome these days.
 
 **Calibrations** — See all your score corrections over time. The app detects patterns like "you consistently score Want lower than the AI on pure engineering roles."
 
