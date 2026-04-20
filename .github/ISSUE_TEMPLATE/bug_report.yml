@@ -1,0 +1,86 @@
+name: Bug report
+description: Something is broken or behaving unexpectedly
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please fill out the fields below so the issue can be reproduced and fixed.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, including any error messages.
+      placeholder: When I click "Evaluate", the page hangs and eventually shows …
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: What were you doing when the bug happened?
+      placeholder: |
+        1. Open the dashboard
+        2. Click "Evaluate Role"
+        3. Paste a posting
+        4. Click Submit
+        5. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      placeholder: A six-dimension scoring breakdown.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ai-mode
+    attributes:
+      label: AI mode
+      description: Which scoring backend are you using?
+      options:
+        - Anthropic API
+        - Claude CLI
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node version
+      description: Run `node -v` in your terminal and paste the output.
+      placeholder: v22.11.0
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: macOS 14.5, Windows 11, Ubuntu 24.04
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Terminal output or screenshots
+      description: Paste any relevant terminal output below. Drag-and-drop screenshots into this field.
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I've searched the existing issues and this isn't a duplicate.
+          required: true
+        - label: I've confirmed I'm on the latest `main`.
+          required: true

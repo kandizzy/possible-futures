@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest an idea or improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Please describe the problem first, then a proposal — this makes it easier to see whether there's a simpler solution than what you're picturing.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem?
+      description: What are you trying to do that the app doesn't let you do well today?
+      placeholder: When evaluating back-to-back roles, I lose track of which ones I've already …
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Your proposal
+      description: How would you like it to work? A sketch, a screenshot, or a detailed description all work.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Workarounds, partial solutions, or other approaches you thought about.
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      description: Possible Futures is deliberately local-first and single-user.
+      options:
+        - label: My idea does not require a hosted backend, analytics, or multi-user support.
+          required: true
