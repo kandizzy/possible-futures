@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getRoleById } from '@/lib/queries/roles';
+import { getApplicationByRoleId } from '@/lib/queries/applications';
 import { getCalibrationsByRole } from '@/lib/queries/calibrations';
 import { getPeopleByCompanyName } from '@/lib/queries/people';
 import { getVersionLabelMap } from '@/lib/queries/source-files';
@@ -12,7 +13,8 @@ import { StatusSelect } from '@/components/roles/status-select';
 import { NotesEditor } from '@/components/roles/notes-editor';
 import { GapAnalysis } from '@/components/roles/gap-analysis';
 import { MarkReviewedButton } from '@/components/discovery/mark-reviewed-button';
-import { RoleHeaderEditor } from '@/components/roles/role-header-editor';
+import { RoleHeaderEditor, EditDetailsTrigger } from '@/components/roles/role-header-editor';
+import { ScoreRadar } from '@/components/roles/score-radar';
 
 export default async function RoleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,6 +29,8 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
   const VERSION_LABELS = getVersionLabelMap();
   const dims: Dimension[] = ['want', 'can', 'grow', 'pay', 'team', 'impact'];
   const scoreCls = getScoreColor(total);
+  const application = getApplicationByRoleId(role.id);
+  const hasMaterials = application?.cover_letter_generated === true;
 
   return (
     <div className="space-y-16">
@@ -54,7 +58,7 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
             url: role.url,
           }}
         >
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 md:gap-8">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8 md:gap-10 pb-8 border-b border-rule">
             <div className="min-w-0 flex-1">
               <div className="smallcaps text-[9px] text-ink-3 mb-4 flex items-baseline gap-4 flex-wrap">
                 <span>Entry № {String(role.id).padStart(4, '0')}</span>
@@ -102,74 +106,78 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
                     </span>
                   </>
                 )}
+                {(role.location || role.salary_range) && (
+                  <span className="text-ink-3">·</span>
+                )}
+                <EditDetailsTrigger />
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-rule-soft space-y-5">
+                <MetaRow label="Recommendation">
+                  <RecommendationOverride
+                    roleId={role.id}
+                    aiRecommendation={role.ai_recommendation}
+                    myRecommendation={role.my_recommendation}
+                  />
+                </MetaRow>
+                <MetaRow label="Status">
+                  <StatusSelect roleId={role.id} currentStatus={role.status} />
+                </MetaRow>
+                {role.recommended_resume_version && (
+                  <MetaRow label="Resume version">
+                    <span
+                      className="font-serif italic text-[15px] text-ink"
+                      style={{ fontVariationSettings: '"opsz" 15, "SOFT" 60' }}
+                    >
+                      {VERSION_LABELS[role.recommended_resume_version] || role.recommended_resume_version}
+                    </span>
+                  </MetaRow>
+                )}
+                {role.date_added && (
+                  <MetaRow label="Added">
+                    <span className="font-mono tabular text-[12px] text-ink-2">
+                      {role.date_added}
+                    </span>
+                  </MetaRow>
+                )}
               </div>
             </div>
 
-            <Link
-              href={`/roles/${role.id}/materials`}
-              className="btn-stamp shrink-0 md:mt-6 self-start"
-            >
-              Draft Materials →
-            </Link>
+            <div className="flex flex-col items-center shrink-0 self-start">
+              <ScoreRadar
+                scores={role.ai_scores}
+                className="w-[240px] h-[240px]"
+                ariaLabel={`Score radar for ${role.company}: ${total} of 18`}
+              />
+              <div className="mt-3 flex items-baseline gap-1">
+                <span
+                  className={`font-serif tabular text-[64px] leading-none ${scoreCls} tracking-tight`}
+                  style={{ fontVariationSettings: '"opsz" 144, "SOFT" 40' }}
+                >
+                  {total}
+                </span>
+                <span className="font-mono text-[12px] text-ink-3">/18</span>
+              </div>
+              <div className="smallcaps text-[9px] text-ink-3 mt-1">Total score</div>
+              {myTotal !== null && myTotal !== total && (
+                <div
+                  className="mt-3 font-serif italic text-[13px] text-ink-2"
+                  style={{ fontVariationSettings: '"opsz" 13, "SOFT" 40' }}
+                >
+                  Your calibration:{' '}
+                  <span className="not-italic font-mono tabular text-ink">{myTotal}</span>
+                </div>
+              )}
+              <Link
+                href={`/roles/${role.id}/materials`}
+                className="btn-stamp mt-6"
+              >
+                {hasMaterials ? 'View Materials →' : 'Draft Materials →'}
+              </Link>
+            </div>
           </div>
         </RoleHeaderEditor>
       </header>
-
-      {/* Gallery label — the verdict */}
-      <section className="rise" style={{ animationDelay: '140ms' }}>
-        <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 md:gap-10 items-start pb-8 border-y border-rule py-8">
-          {/* The score, set as a gallery plaque */}
-          <div className="flex md:block items-baseline gap-6 md:gap-0 md:text-center">
-            <div>
-              <div className="smallcaps text-[8px] text-ink-3 mb-2">Verdict</div>
-              <div
-                className={`font-serif tabular text-[72px] md:text-[96px] leading-[0.85] ${scoreCls} tracking-tighter`}
-                style={{ fontVariationSettings: '"opsz" 144, "SOFT" 40' }}
-              >
-                {total}
-              </div>
-              <div className="font-mono tabular text-[10px] text-ink-3 mt-1">out of 18</div>
-            </div>
-            {myTotal !== null && myTotal !== total && (
-              <div className="md:mt-3 md:pt-3 md:border-t md:border-rule">
-                <div className="smallcaps text-[8px] text-ink-3">Your score</div>
-                <div className="font-mono tabular text-[20px] text-ink mt-1">{myTotal}</div>
-              </div>
-            )}
-          </div>
-
-          {/* Recommendation + status strip */}
-          <div className="space-y-5 md:pl-10 md:border-l md:border-rule pt-5 md:pt-0 border-t md:border-t-0 border-rule">
-            <MetaRow label="Recommendation">
-              <RecommendationOverride
-                roleId={role.id}
-                aiRecommendation={role.ai_recommendation}
-                myRecommendation={role.my_recommendation}
-              />
-            </MetaRow>
-            <MetaRow label="Status">
-              <StatusSelect roleId={role.id} currentStatus={role.status} />
-            </MetaRow>
-            {role.recommended_resume_version && (
-              <MetaRow label="Resume version">
-                <span
-                  className="font-serif italic text-[15px] text-ink"
-                  style={{ fontVariationSettings: '"opsz" 15, "SOFT" 60' }}
-                >
-                  {VERSION_LABELS[role.recommended_resume_version] || role.recommended_resume_version}
-                </span>
-              </MetaRow>
-            )}
-            {role.date_added && (
-              <MetaRow label="Added">
-                <span className="font-mono tabular text-[12px] text-ink-2">
-                  {role.date_added}
-                </span>
-              </MetaRow>
-            )}
-          </div>
-        </div>
-      </section>
 
       {/* Contacts */}
       {contacts.length > 0 && (
