@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Possible Futures — Getting Started</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.min.css" id="theme">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..700,0..100;1,9..144,300..700,0..100&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --font-serif: "Fraunces", Georgia, serif;
+      --font-sans: "Instrument Sans", -apple-system, system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", "SF Mono", monospace;
+      --paper: #f4eee4;
+      --ink: #1a1512;
+      --ink-2: #6b5e4f;
+      --ink-3: #a39379;
+      --rule: #d4c6ad;
+      --stamp: #c6371f;
+    }
+
+    .reveal, .reveal .slide-background { background: var(--paper); }
+
+    .reveal::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.3;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.07 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .reveal h1 {
+      font-family: var(--font-serif);
+      color: var(--ink);
+      font-weight: 400;
+      font-size: 1.4em;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      margin: 0;
+      font-variation-settings: "opsz" 144, "SOFT" 60;
+    }
+    .reveal h1 em {
+      color: var(--stamp);
+      font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+    }
+    .reveal h2 {
+      font-family: var(--font-serif);
+      color: var(--ink);
+      font-weight: 400;
+      font-size: 1em;
+      margin: 0 0 0.3em 0;
+      font-variation-settings: "opsz" 48, "SOFT" 40;
+    }
+    .reveal h3 {
+      font-family: var(--font-sans);
+      color: var(--ink-3);
+      font-size: 0.45em;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin: 0;
+    }
+    .reveal p, .reveal li {
+      font-family: var(--font-serif);
+      color: var(--ink-2);
+      font-size: 0.55em;
+      line-height: 1.35;
+      font-variation-settings: "opsz" 14, "SOFT" 30;
+    }
+    .reveal code, .reveal pre code {
+      font-family: var(--font-mono);
+      font-size: 0.75em;
+    }
+    .reveal pre {
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 6px;
+      padding: 0.7em 1em;
+      box-shadow: none;
+      text-align: left;
+      margin: 0.5em 0;
+    }
+    .reveal img.screenshot {
+      max-height: 74vh;
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      box-shadow: 0 4px 20px rgba(26, 21, 18, 0.08);
+      margin-top: 0.3em;
+      max-width: 900px;
+      width: 100%;
+    }
+    .reveal .slide-layout {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      text-align: left;
+    }
+    .reveal .slide-layout .slide-label {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 50px;
+    }
+    .reveal .slide-layout .slide-label h3 {
+      border: 1px solid var(--rule);
+      padding: 0.2em 0.35em;
+      display: inline-block;
+      font-size: 0.4em;
+      writing-mode: horizontal-tb;
+    }
+    .reveal .slide-layout .slide-main {
+      margin-left: 60px;
+      padding-right: 10px;
+    }
+    .reveal .slide-layout .slide-main h1 {
+      text-align: left;
+    }
+    .reveal .slide-layout .slide-main img.screenshot {
+      width: 100%;
+      max-width: none;
+    }
+    .reveal .sub {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 0.5em;
+      color: var(--ink-3);
+      margin: 0.1em 0 0.2em 0;
+      text-align: left;
+      font-variation-settings: "opsz" 12, "SOFT" 40;
+    }
+    .reveal .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5em;
+      text-align: left;
+      margin-top: 0.5em;
+    }
+    .reveal ul { text-align: left; margin: 0.3em 0; }
+    .reveal .feature-list li {
+      margin-bottom: 0.3em;
+      list-style: none;
+      padding-left: 0;
+    }
+    .reveal .feature-list li::before {
+      content: "—";
+      color: var(--stamp);
+      margin-right: 0.4em;
+    }
+    ::selection { background: var(--stamp); color: var(--paper); }
+  </style>
+</head>
+<body>
+
+<div class="reveal">
+  <div class="slides">
+
+    <!-- Title -->
+    <section>
+      <h3>A Working Index</h3>
+      <h1 style="font-size: 2.4em; margin-bottom: 0.2em;">Possible<br><em>Futures.</em></h1>
+      <p>Score postings against your compass. Discover companies. Track your pipeline. Own every word.</p>
+      <p style="font-size: 0.5em; color: var(--ink-3); margin-top: 1.5em; font-style: italic;">
+        Next.js · SQLite · Claude API · Local-first
+      </p>
+    </section>
+
+    <!-- What it does -->
+    <section>
+      <h3>Overview</h3>
+      <h2>What It Does</h2>
+      <ul class="feature-list">
+        <li><strong>Write your career story</strong> through a guided five-chapter intake</li>
+        <li><strong>Score job postings</strong> against a 6-dimension rubric grounded in your history</li>
+        <li><strong>Discover companies</strong> that match your signal words and values</li>
+        <li><strong>Generate application materials</strong> that follow your writing rules</li>
+        <li><strong>Export ATS-friendly PDFs</strong> ready to submit</li>
+        <li><strong>Track everything</strong> in one place: roles, applications, companies, contacts</li>
+      </ul>
+    </section>
+
+    <!-- Quick start -->
+    <section>
+      <h3>Quick Start</h3>
+      <h2>Five commands.</h2>
+      <pre><code>mkdir career && cd career
+git clone https://github.com/kandizzy/possible-futures.git
+cd possible-futures && npm install
+echo "ANTHROPIC_API_KEY=your-key-here" > .env.local
+npm run dev</code></pre>
+      <p style="margin-top: 0.8em;">Open <strong>http://localhost:3000</strong> and the intake begins.</p>
+      <p class="sub">Clone into a parent folder (career/, resume/, etc.) — the app writes your generated files there. New to the terminal, Node, or nvm? That's fine. The README walks through installing each piece step by step, and getting your Anthropic API key.</p>
+    </section>
+
+    <!-- The Ritual -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1>The <em>ritual.</em></h1>
+          <p class="sub">30 minutes, your last few roles in front of you, and the promise that you're writing this yourself.</p>
+        <img class="screenshot" src="screenshots/01-begin.png" alt="The ritual gate">
+        </div></div>
+    </section>
+
+    <!-- Chapter 1 -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        <h3>I</h3></div><div class="slide-main">
+          <h1>The <em>setup.</em></h1>
+          <p class="sub">Name, education, and the through-line that connects your work.</p>
+        <img class="screenshot" src="screenshots/04-ch1-filled.png" alt="Chapter 1 filled in">
+        </div></div>
+    </section>
+
+    <!-- Chapter 2 -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        <h3>II</h3></div><div class="slide-main">
+          <h1>The <em>throughline.</em></h1>
+          <p class="sub">Two or more roles. Title, company, dates, summary, proudest moment. Messy notes welcome.</p>
+        <img class="screenshot" src="screenshots/06-ch2-filled.png" alt="Three roles entered">
+        </div></div>
+    </section>
+
+    <!-- Chapter 3 -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        <h3>III</h3></div><div class="slide-main">
+          <h1>What you're <em>looking for.</em></h1>
+          <p class="sub">Dream role, role tiers, target companies, signal words, compensation floor.</p>
+        <img class="screenshot" src="screenshots/08-ch3-filled.png" alt="Signal words and targets">
+        </div></div>
+    </section>
+
+    <!-- Chapter 4 -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        <h3>IV</h3></div><div class="slide-main">
+          <h1>The <em>playbook.</em></h1>
+          <p class="sub">Red flags, banned words, voice calibration. Click phrases that sound like you, or paste your own.</p>
+        <img class="screenshot" src="screenshots/10-ch4-filled.png" alt="Playbook started">
+        </div></div>
+    </section>
+
+    <!-- Chapter 5 -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        <h3>V</h3></div><div class="slide-main">
+          <h1>The shelf <em>of proof.</em></h1>
+          <p class="sub">Projects, recognition, and resume versions. Add or remove versions as needed.</p>
+        <img class="screenshot" src="screenshots/12-ch5-filled.png" alt="Three projects">
+        </div></div>
+    </section>
+
+    <!-- Resume Versions -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        <h3>V</h3></div><div class="slide-main">
+          <h1>Resume <em>versions.</em></h1>
+          <p class="sub">Different roles call for different resumes. Name them, describe their emphasis.</p>
+        <img class="screenshot" src="screenshots/13-ch5-versions.png" alt="Resume versions">
+        </div></div>
+    </section>
+
+    <!-- Publish -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1>Press the <em>plates.</em></h1>
+          <p class="sub">Preview your Book, Compass, and Playbook in rendered markdown or source view.</p>
+        <img class="screenshot" src="screenshots/14-publish-preview.png" alt="Publish preview">
+        </div></div>
+    </section>
+
+    <!-- The Compass -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1>The <em>compass.</em></h1>
+          <p class="sub">Your scoring rubric. Signal words, red flags, role tiers. Every posting is evaluated against this.</p>
+        <img class="screenshot" src="screenshots/15-publish-compass.png" alt="Compass preview">
+        </div></div>
+    </section>
+
+    <!-- Published -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1>It's <em>ready.</em></h1>
+          <p class="sub">Three markdown files saved. The app is primed.</p>
+        <img class="screenshot" src="screenshots/17-publish-done.png" alt="Published">
+        </div></div>
+    </section>
+
+    <!-- Dashboard -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1>An index of <em>possible futures.</em></h1>
+          <p class="sub">Every role scored against your compass, with status tracking across your pipeline.</p>
+        <img class="screenshot" src="screenshots/18-dashboard.png" alt="Dashboard">
+        </div></div>
+    </section>
+
+    <!-- Role Detail -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1>The scoring <em>breakdown.</em></h1>
+          <p class="sub">Six dimensions, fit summary, signal words, gap analysis. Calibrate scores you disagree with.</p>
+        <img class="screenshot" src="screenshots/19-role-detail.png" alt="Role detail">
+        </div></div>
+    </section>
+
+    <!-- Gap Analysis -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1>Gaps &amp; <em>studies.</em></h1>
+          <p class="sub">When the posting asks for something your Book doesn't evidence, the app doesn't stop at "not a match." It turns a rejection risk into a weekend plan.</p>
+          <ul class="feature-list" style="margin-top: 0.8em;">
+            <li><strong>What's missing</strong> — the specific gap between your background and the posting.</li>
+            <li><strong>Why it matters here</strong> — framed against this role, not gaps in the abstract.</li>
+            <li><strong>Work already on hand</strong> — projects from your Book that partially address it, so you know what to surface.</li>
+            <li><strong>Possible studies</strong> — two or three concrete, buildable projects. Not "learn Rust," but "Build a CLI that does X."</li>
+          </ul>
+          <p class="sub" style="margin-top: 0.8em; color: var(--stamp); font-style: italic;">Strong fits return nothing. That silence is the confirmation — you already have the skills this role needs.</p>
+        </div></div>
+    </section>
+
+    <!-- Evaluate -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1>Score a <em>posting.</em></h1>
+          <p class="sub">Paste a job posting or fetch by URL. Scored in 15-30 seconds.</p>
+        <img class="screenshot" src="screenshots/20-evaluate.png" alt="Evaluate a role">
+        </div></div>
+    </section>
+
+    <!-- Discover -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1>Find the <em>next houses.</em></h1>
+          <p class="sub">Claude suggests companies. Each is verified live against its ATS. Track or skip.</p>
+        <img class="screenshot" src="screenshots/21-discover.png" alt="Discover companies">
+        </div></div>
+    </section>
+
+    <!-- Companies -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1>The <em>houses.</em></h1>
+          <p class="sub">Pipeline view per company. Active roles sorted by urgency, watchlist by category.</p>
+        <img class="screenshot" src="screenshots/22-companies.png" alt="Companies page">
+        </div></div>
+    </section>
+
+    <!-- Ledger -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1>The <em>ledger.</em></h1>
+          <p class="sub">Every API call, its cost, and what it was for. Export to CSV.</p>
+          <p class="sub" style="color: var(--stamp); font-style: italic;">Work in progress. Cost estimates are computed from token counts — they haven't been reconciled against actual Anthropic billing yet. Treat as directional.</p>
+        <img class="screenshot" src="screenshots/23-ledger.png" alt="Ledger">
+        </div></div>
+    </section>
+
+    <!-- Three documents -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1>Three documents, <em>one source.</em></h1>
+          <div class="two-col">
+            <div>
+              <p><strong>The Book</strong> — career history, projects, skills, writing rules, sensitive context.</p>
+              <p><strong>The Compass</strong> — scoring rubric. Signal words, red flags, role tiers, compensation floor.</p>
+              <p><strong>The Playbook</strong> — resume rules, cover letter rules, banned words, version strategies.</p>
+            </div>
+            <div>
+              <p>All three are plain markdown. Edit them in any text editor to customize how Claude scores and writes for you.</p>
+              <p>Change a rule, and the next score reflects it. No retraining, no waiting.</p>
+              <p style="color: var(--stamp); font-style: italic;">Use Revise in the sidebar to regenerate from the intake, or edit the files by hand for full control.</p>
+            </div>
+          </div>
+        </div></div>
+    </section>
+
+    <!-- Settings -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1><em>Settings.</em></h1>
+          <p class="sub">Choose your AI model, tune signal words, reload source files, and access Revise.</p>
+        <img class="screenshot" src="screenshots/24-settings.png" alt="Settings">
+        </div></div>
+    </section>
+
+    <!-- PDF Export -->
+    <section>
+      <div class="slide-layout"><div class="slide-label">
+        </div><div class="slide-main">
+          <h1>ATS-friendly <em>PDFs.</em></h1>
+          <p>Generate cover letters and resume summaries, then download as clean PDFs. Arial font, single column, no graphics. Exactly what ATS scanners want.</p>
+          <p class="sub">Available on the materials page after generating content for a role.</p>
+        </div></div>
+    </section>
+
+    <!-- Closing -->
+    <section>
+      <h3>Possible Futures</h3>
+      <h1 style="font-size: 1.8em; margin-bottom: 0.3em;">Your compass.<br><em>Your words.</em></h1>
+      <p>Local-first. Your data stays on your machine. Runs on the Anthropic API or Claude Code.</p>
+      <p style="margin-top: 1em;">
+        <a href="https://github.com/kandizzy/possible-futures" style="color: var(--stamp); font-family: var(--font-mono); font-size: 0.7em;">github.com/kandizzy/possible-futures</a>
+      </p>
+    </section>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: 'none',
+    backgroundTransition: 'none',
+    width: 1100,
+    height: 700,
+    margin: 0.06,
+    center: true,
+  });
+</script>
+</body>
+</html>

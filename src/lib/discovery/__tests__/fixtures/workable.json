@@ -1,0 +1,33 @@
+{
+  "jobs": [
+    {
+      "id": "wk-1",
+      "title": "Senior Product Designer",
+      "shortcode": "A1B2C3D4",
+      "code": "PD-2025-01",
+      "location": {
+        "city": "Stockholm",
+        "region": "Stockholms län",
+        "country": "Sweden",
+        "telecommuting": false
+      },
+      "description": "<p>We are looking for a Senior Product Designer to join our growing team.</p><p>You will own end-to-end design for a core product area.</p>",
+      "requirements": "<ul><li>5+ years of product design experience</li><li>Portfolio showing shipped work</li></ul>",
+      "benefits": "<p>Stock options, unlimited PTO, and a real craft culture.</p>",
+      "url": "https://apply.workable.com/example-co/j/A1B2C3D4/"
+    },
+    {
+      "id": "wk-2",
+      "title": "Design Engineer",
+      "shortcode": "E5F6G7H8",
+      "location": {
+        "city": null,
+        "region": null,
+        "country": null,
+        "telecommuting": true
+      },
+      "description": "<p>Design-engineer hybrid role. You will prototype in code.</p>",
+      "requirements": "<p>React, TypeScript, taste</p>"
+    }
+  ]
+}
