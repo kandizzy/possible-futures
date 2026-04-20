@@ -3,16 +3,8 @@
 import Link from 'next/link';
 import { getTotalScore, getScoreColor } from '@/lib/types';
 import { StatusSelect } from './status-select';
+import { ScoreRadarMini } from './score-radar';
 import type { Role } from '@/lib/types';
-
-const DIM_LABELS: { key: 'want' | 'can' | 'grow' | 'pay' | 'team' | 'impact'; label: string }[] = [
-  { key: 'want', label: 'W' },
-  { key: 'can', label: 'C' },
-  { key: 'grow', label: 'G' },
-  { key: 'pay', label: 'P' },
-  { key: 'team', label: 'T' },
-  { key: 'impact', label: 'I' },
-];
 
 export function RoleRow({
   role,
@@ -68,22 +60,12 @@ export function RoleRow({
           )}
         </Link>
 
-        <div className="flex items-baseline gap-2.5 font-mono tabular text-[10px] text-ink-2 px-4 border-l border-r border-rule-soft mx-2">
-          {DIM_LABELS.map(({ key, label }) => {
-            const s = role.ai_scores[key].score;
-            return (
-              <span key={key} className="inline-flex flex-col items-center leading-none gap-0.5">
-                <span className="text-ink-3 text-[8px]">{label}</span>
-                <span
-                  className={
-                    s >= 3 ? 'text-stamp font-semibold' : s >= 2 ? 'text-ink' : 'text-ink-3'
-                  }
-                >
-                  {s}
-                </span>
-              </span>
-            );
-          })}
+        <div className="flex justify-end shrink-0">
+          <ScoreRadarMini
+            scores={role.ai_scores}
+            className="w-[52px] h-[52px]"
+            ariaLabel={`Score shape for ${role.company}: ${total} of 18`}
+          />
         </div>
 
         <div className="flex items-baseline gap-1">
@@ -130,39 +112,26 @@ export function RoleRow({
               )}
             </Link>
           </div>
-          <div className="flex items-baseline gap-1 shrink-0">
-            <span
-              className={`font-serif tabular text-[32px] leading-none ${scoreCls} tracking-tight`}
-              style={{ fontVariationSettings: '"opsz" 40, "SOFT" 40' }}
-            >
-              {total}
-            </span>
-            <span className="font-mono text-[9px] text-ink-3">/18</span>
+          <div className="flex items-center gap-3 shrink-0">
+            <ScoreRadarMini
+              scores={role.ai_scores}
+              className="w-10 h-10"
+              ariaLabel={`Score shape for ${role.company}: ${total} of 18`}
+            />
+            <div className="flex items-baseline gap-1">
+              <span
+                className={`font-serif tabular text-[32px] leading-none ${scoreCls} tracking-tight`}
+                style={{ fontVariationSettings: '"opsz" 40, "SOFT" 40' }}
+              >
+                {total}
+              </span>
+              <span className="font-mono text-[9px] text-ink-3">/18</span>
+            </div>
           </div>
         </div>
 
-        {/* Dimension row + status */}
-        <div className="mt-3 flex items-baseline justify-between gap-4 pt-3 border-t border-rule-soft">
-          <div className="flex items-baseline gap-2.5 font-mono tabular text-[10px] text-ink-2">
-            {DIM_LABELS.map(({ key, label }) => {
-              const s = role.ai_scores[key].score;
-              return (
-                <span
-                  key={key}
-                  className="inline-flex flex-col items-center leading-none gap-0.5"
-                >
-                  <span className="text-ink-3 text-[8px]">{label}</span>
-                  <span
-                    className={
-                      s >= 3 ? 'text-stamp font-semibold' : s >= 2 ? 'text-ink' : 'text-ink-3'
-                    }
-                  >
-                    {s}
-                  </span>
-                </span>
-              );
-            })}
-          </div>
+        {/* Status strip */}
+        <div className="mt-3 flex justify-end pt-3 border-t border-rule-soft">
           <StatusSelect roleId={role.id} currentStatus={role.status} />
         </div>
       </div>

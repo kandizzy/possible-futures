@@ -1,7 +1,33 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { createContext, useContext, useState, useTransition } from 'react';
 import { updateRoleMetadataAction } from '@/actions/roles';
+
+// Exposes the "start editing" callback down through children so the page can
+// place the edit trigger inline (e.g., in the meta row) instead of having it
+// stranded at the bottom of the header. We can't pass a render-prop children
+// function across the Server→Client boundary, so we use context instead.
+const EditDetailsContext = createContext<(() => void) | null>(null);
+
+/**
+ * Client component that renders the "edit details" affordance. Must be a
+ * descendant of <RoleHeaderEditor> in read mode; renders nothing otherwise.
+ * Place it wherever the edit link belongs visually.
+ */
+export function EditDetailsTrigger() {
+  const startEditing = useContext(EditDetailsContext);
+  if (!startEditing) return null;
+  return (
+    <button
+      type="button"
+      onClick={startEditing}
+      className="font-serif italic text-[12px] text-ink-3 hover:text-stamp transition-colors"
+      style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
+    >
+      edit details →
+    </button>
+  );
+}
 
 export interface RoleHeaderEditorProps {
   role: {
@@ -16,9 +42,10 @@ export interface RoleHeaderEditorProps {
 }
 
 /**
- * Wraps the role detail page's title block. Renders the existing display markup
- * (as children) in read mode, plus a small "edit" affordance that swaps in an
- * inline form. Save commits via server action; cancel restores.
+ * Wraps the role detail page's title block. In read mode, renders children
+ * verbatim and exposes a start-editing callback via context so descendants
+ * can render an <EditDetailsTrigger /> wherever they want. In edit mode,
+ * swaps children for an inline form. Save commits via server action.
  */
 export function RoleHeaderEditor({ role, children }: RoleHeaderEditorProps) {
   const [editing, setEditing] = useState(false);
@@ -27,20 +54,14 @@ export function RoleHeaderEditor({ role, children }: RoleHeaderEditorProps) {
 
   if (!editing) {
     return (
-      <div className="relative">
+      <EditDetailsContext.Provider
+        value={() => {
+          setError(null);
+          setEditing(true);
+        }}
+      >
         {children}
-        <button
-          type="button"
-          onClick={() => {
-            setError(null);
-            setEditing(true);
-          }}
-          className="mt-4 font-serif italic text-[12px] text-ink-3 hover:text-stamp transition-colors"
-          style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
-        >
-          edit details →
-        </button>
-      </div>
+      </EditDetailsContext.Provider>
     );
   }
 
