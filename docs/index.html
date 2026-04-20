@@ -156,6 +156,21 @@
       margin-right: 0.4em;
     }
     ::selection { background: var(--stamp); color: var(--paper); }
+
+    /* Slide counter — bottom-left, out of the way of screenshot content */
+    .reveal .slide-number {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: var(--ink-3);
+      background: transparent;
+      left: 28px;
+      right: auto;
+      bottom: 24px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.04em;
+      z-index: 10;
+    }
+    .reveal .slide-number a { color: var(--ink-3); text-decoration: none; }
   </style>
 </head>
 <body>
@@ -436,6 +451,11 @@ npm run dev</code></pre>
     hash: true,
     transition: 'none',
     backgroundTransition: 'none',
+    slideNumber: function () {
+      const h = String(Reveal.getIndices().h + 1).padStart(2, '0');
+      const total = String(Reveal.getTotalSlides()).padStart(2, '0');
+      return [h + '\u00A0of\u00A0' + total];
+    },
     width: 1100,
     height: 700,
     margin: 0.06,
