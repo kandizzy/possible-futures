@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { getAllRoles, getRoleById, insertRole, updateRoleStatus, updateRoleScores, updateRoleNotes, getRoleStatusCounts } from '@/lib/queries/roles';
+import { getAllRoles, getRoleById, insertRole, updateRoleStatus, updateRoleScores, updateRoleNotes, getRoleStatusCounts, deleteRole } from '@/lib/queries/roles';
+import { insertCalibration } from '@/lib/queries/calibrations';
 import { getDb } from '@/lib/db';
 import { makeAiScores } from '@/test/db-helper';
 
@@ -173,5 +174,34 @@ describe('getRoleStatusCounts', () => {
 
   it('returns empty object when no roles', () => {
     expect(getRoleStatusCounts()).toEqual({});
+  });
+});
+
+describe('deleteRole', () => {
+  it('removes the role', () => {
+    const id = insertTestRole();
+    deleteRole(id);
+    expect(getRoleById(id)).toBeNull();
+  });
+
+  it('cascades to calibrations', () => {
+    const id = insertTestRole();
+    insertCalibration({ role_id: id, dimension: 'want', ai_score: 2, my_score: 3, reason: 'test' });
+    deleteRole(id);
+    const db = getDb();
+    const remaining = db.prepare('SELECT COUNT(*) as c FROM calibrations WHERE role_id = ?').get(id) as { c: number };
+    expect(remaining.c).toBe(0);
+  });
+
+  it('leaves other roles untouched', () => {
+    const keepId = insertTestRole({ company: 'Keeper' });
+    const dropId = insertTestRole({ company: 'Goner' });
+    deleteRole(dropId);
+    expect(getRoleById(keepId)).not.toBeNull();
+    expect(getRoleById(dropId)).toBeNull();
+  });
+
+  it('is a no-op for unknown ids', () => {
+    expect(() => deleteRole(9999)).not.toThrow();
   });
 });

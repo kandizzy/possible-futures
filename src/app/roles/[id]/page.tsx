@@ -15,6 +15,7 @@ import { GapAnalysis } from '@/components/roles/gap-analysis';
 import { MarkReviewedButton } from '@/components/discovery/mark-reviewed-button';
 import { RoleHeaderEditor, EditDetailsTrigger } from '@/components/roles/role-header-editor';
 import { ScoreRadar } from '@/components/roles/score-radar';
+import { DeleteRoleButton } from '@/components/roles/delete-role-button';
 
 export default async function RoleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -354,6 +355,11 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
           </a>
         </div>
       )}
+
+      {/* Delete */}
+      <div className="pt-8 border-t border-rule-soft">
+        <DeleteRoleButton roleId={role.id} label={`${role.company} — ${role.title}`} />
+      </div>
     </div>
   );
 }

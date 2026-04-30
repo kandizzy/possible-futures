@@ -1,7 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getRoleById, updateRoleMetadata, type RoleMetadataPatch } from '@/lib/queries/roles';
+import { redirect } from 'next/navigation';
+import { deleteRole, getRoleById, updateRoleMetadata, type RoleMetadataPatch } from '@/lib/queries/roles';
 
 export interface UpdateRoleMetadataResult {
   ok: boolean;
@@ -45,4 +46,23 @@ export async function updateRoleMetadataAction(
   revalidatePath('/');
   revalidatePath('/applications');
   return { ok: true };
+}
+
+export async function deleteRoleAction(formData: FormData): Promise<void> {
+  const idRaw = formData.get('id');
+  const id = Number(idRaw);
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error('Missing or invalid role id.');
+  }
+
+  const existing = getRoleById(id);
+  if (!existing) {
+    throw new Error('Role not found.');
+  }
+
+  deleteRole(id);
+
+  revalidatePath('/');
+  revalidatePath('/applications');
+  redirect('/');
 }

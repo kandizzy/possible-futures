@@ -240,3 +240,8 @@ export function updateRoleMetadata(id: number, patch: RoleMetadataPatch): void {
   values.push(String(id));
   db.prepare(`UPDATE roles SET ${fields.join(', ')} WHERE id = ?`).run(...values);
 }
+
+export function deleteRole(id: number): void {
+  const db = getDb();
+  db.prepare('DELETE FROM roles WHERE id = ?').run(id);
+}
