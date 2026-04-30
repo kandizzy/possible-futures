@@ -1,12 +1,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { setAiMode, setMaterialsMode, getCompassConfig, getAiMode, upsertCompassConfig, setReasoningModel } from '@/lib/queries/compass';
+import { setAiMode, setMaterialsMode, getCompassConfig, getAiMode, upsertCompassConfig, setReasoningModel, getLocalConfig, setLocalConfig } from '@/lib/queries/compass';
 import { PRICING } from '@/lib/ai/pricing';
 import { getSourceFile, getResumeVersionLabels, upsertSourceFile, getAllSourceFiles } from '@/lib/queries/source-files';
 import { parseCompass } from '@/lib/parsers/compass';
 import { getModel } from '@/lib/ai/client';
-import { callAiApi, callAiCli } from '@/lib/ai/call';
+import { callAiApi, callAiCli, callAiLocal } from '@/lib/ai/call';
+import { listLocalModels } from '@/lib/ai/local';
 import { extractNameFromBook, deriveBookFilename } from '@/lib/user-name';
 import fs from 'fs';
 import path from 'path';
@@ -28,12 +29,50 @@ export async function getSourceFilePaths(): Promise<Record<string, string>> {
 
 export async function updateAiMode(formData: FormData): Promise<{ success: boolean; mode: AiMode }> {
   const mode = formData.get('ai_mode') as AiMode;
-  if (mode !== 'api' && mode !== 'cli') {
+  if (mode !== 'api' && mode !== 'cli' && mode !== 'local') {
     return { success: false, mode: 'api' };
   }
   setAiMode(mode);
   revalidatePath('/settings');
   return { success: true, mode };
+}
+
+export async function updateLocalConfig(formData: FormData): Promise<{ success: boolean; error?: string }> {
+  const baseUrl = (formData.get('local_base_url') as string | null)?.trim() ?? '';
+  const model = (formData.get('local_model') as string | null)?.trim() ?? '';
+  const apiKeyRaw = (formData.get('local_api_key') as string | null)?.trim() ?? '';
+
+  if (!baseUrl) return { success: false, error: 'Base URL is required.' };
+  try {
+    new URL(baseUrl);
+  } catch {
+    return { success: false, error: 'Base URL is not a valid URL.' };
+  }
+
+  setLocalConfig({
+    base_url: baseUrl.replace(/\/$/, ''),
+    model,
+    api_key: apiKeyRaw || null,
+  });
+  revalidatePath('/settings');
+  return { success: true };
+}
+
+export async function getLocalSettings() {
+  return getLocalConfig();
+}
+
+export async function fetchLocalModels(formData: FormData): Promise<{ success: boolean; models: string[]; error?: string }> {
+  const baseUrl = ((formData.get('local_base_url') as string | null)?.trim() ?? '').replace(/\/$/, '');
+  const apiKeyRaw = (formData.get('local_api_key') as string | null)?.trim() ?? '';
+  if (!baseUrl) return { success: false, models: [], error: 'Base URL is required.' };
+  try {
+    const models = await listLocalModels(baseUrl, apiKeyRaw || null);
+    return { success: true, models };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, models: [], error: msg };
+  }
 }
 
 export async function updateMaterialsMode(formData: FormData): Promise<{ success: boolean; mode: MaterialsMode }> {
@@ -59,6 +98,9 @@ export async function getSettings() {
     signal_words: config?.signal_words || [],
     red_flag_words: config?.red_flag_words || [],
     compensation_floor: config?.compensation_floor || 150000,
+    local_base_url: config?.local_base_url || 'http://localhost:1234/v1',
+    local_model: config?.local_model || '',
+    local_api_key: config?.local_api_key || null,
   };
 }
 
@@ -190,6 +232,16 @@ Requirements:
           operation: 'generate_base_resume',
           systemPrompt,
           userPrompt,
+          context: { type: 'resume_version' },
+        });
+        resume = result.text;
+      } else if (aiMode === 'local') {
+        const result = await callAiLocal({
+          operation: 'generate_base_resume',
+          systemPrompt,
+          userPrompt,
+          temperature: 0.4,
+          maxTokens: 4096,
           context: { type: 'resume_version' },
         });
         resume = result.text;

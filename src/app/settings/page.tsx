@@ -51,7 +51,14 @@ export default async function SettingsPage() {
           </div>
         </Panel>
 
-        <AiModeToggle initialMode={settings.ai_mode as AiMode} />
+        <AiModeToggle
+          initialMode={settings.ai_mode as AiMode}
+          initialLocalConfig={{
+            base_url: settings.local_base_url,
+            model: settings.local_model,
+            api_key: settings.local_api_key,
+          }}
+        />
         <ReasoningModelToggle initialModel={settings.reasoning_model} />
         <MaterialsModeToggle initialMode={settings.materials_mode as MaterialsMode} />
         <CompassEditor

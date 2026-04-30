@@ -1,5 +1,5 @@
 import { getModel } from './client';
-import { callAiApi, callAiCli, type LogContext } from './call';
+import { callAiApi, callAiCli, callAiLocal, type LogContext } from './call';
 import {
   getScoringSystemPrompt,
   buildScoringUserPrompt,
@@ -43,6 +43,16 @@ export async function scorePosting(
       operation: 'score_posting',
       systemPrompt: getScoringSystemPrompt(),
       userPrompt: buildScoringUserPrompt(postingText),
+      context,
+    });
+    rawResponse = result.text;
+  } else if (mode === 'local') {
+    const result = await callAiLocal({
+      operation: 'score_posting',
+      systemPrompt: getScoringSystemPrompt(),
+      userPrompt: buildScoringUserPrompt(postingText),
+      temperature: 0.2,
+      maxTokens: 4096,
       context,
     });
     rawResponse = result.text;

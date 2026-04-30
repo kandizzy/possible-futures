@@ -20,7 +20,7 @@ export default function EvaluatePage() {
             <div>
               Using{' '}
               <span className="text-ink not-italic font-mono text-[11px]">
-                {aiMode === 'cli' ? 'Claude CLI' : 'Anthropic API'}
+                {aiMode === 'cli' ? 'Claude CLI' : aiMode === 'local' ? 'Local model' : 'Anthropic API'}
               </span>
             </div>
             <Link

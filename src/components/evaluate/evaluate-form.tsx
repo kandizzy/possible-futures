@@ -8,7 +8,7 @@ export function EvaluateForm({
   aiMode,
   versionLabels,
 }: {
-  aiMode: 'api' | 'cli';
+  aiMode: 'api' | 'cli' | 'local';
   versionLabels: Record<string, string>;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -150,16 +150,16 @@ export function EvaluateForm({
           <p
             className="mt-3 font-mono text-[11px] text-ink-3"
           >
-            Scoring via {aiMode === 'cli' ? 'Claude CLI' : 'Anthropic API'} · typically 15-30 seconds{aiMode === 'cli' ? ' (CLI can be slower)' : ''}
+            Scoring via {aiMode === 'cli' ? 'Claude CLI' : aiMode === 'local' ? 'your local model' : 'Anthropic API'} · typically 15-30 seconds{aiMode === 'cli' ? ' (CLI can be slower)' : aiMode === 'local' ? ' (local can be slower)' : ''}
           </p>
         </div>
       )}
 
       {/* Error */}
-      {result && !result.success && (
+      {!isPending && result && !result.success && (
         <div className="mt-8 p-5 border border-stamp bg-stamp/5">
           <div className="smallcaps text-[9px] text-stamp mb-2">Error</div>
-          <p className="font-serif italic text-[14px] text-ink">{result.error}</p>
+          <p className="font-serif italic text-[14px] text-ink whitespace-pre-line">{result.error}</p>
         </div>
       )}
 

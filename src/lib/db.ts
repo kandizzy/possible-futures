@@ -51,6 +51,15 @@ function migrate(db: Database.Database): void {
   if (!colNames.has('reasoning_model')) {
     db.exec("ALTER TABLE compass_config ADD COLUMN reasoning_model TEXT NOT NULL DEFAULT 'claude-sonnet-4-6'");
   }
+  if (!colNames.has('local_base_url')) {
+    db.exec("ALTER TABLE compass_config ADD COLUMN local_base_url TEXT NOT NULL DEFAULT 'http://localhost:1234/v1'");
+  }
+  if (!colNames.has('local_model')) {
+    db.exec("ALTER TABLE compass_config ADD COLUMN local_model TEXT NOT NULL DEFAULT ''");
+  }
+  if (!colNames.has('local_api_key')) {
+    db.exec("ALTER TABLE compass_config ADD COLUMN local_api_key TEXT");
+  }
 
   // Migration: add gap_analysis to roles table
   const rolesCols = db.prepare("PRAGMA table_info(roles)").all() as { name: string }[];

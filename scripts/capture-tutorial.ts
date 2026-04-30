@@ -473,7 +473,14 @@ async function main() {
   // ------------------------------------------------------------------
   await page.goto(BASE + '/settings');
   await page.waitForTimeout(500);
-  await capture(page, 'settings', 'Settings', 'Tune your compass, choose your AI model, and manage signal words.');
+  // Click "Local model" so the local-config form is visible in the screenshot.
+  // Roll it back afterward so the sandbox DB doesn't change ai_mode permanently.
+  const localCard = page.getByRole('button', { name: /Local model/i });
+  await localCard.click();
+  await page.waitForTimeout(400);
+  await capture(page, 'settings', 'Settings', 'Tune your compass, choose your AI backend (Anthropic API, Claude Code, or a local LM Studio / Ollama model), and manage signal words.');
+  await page.getByRole('button', { name: /Anthropic API/i }).click();
+  await page.waitForTimeout(200);
 
   await browser.close();
 

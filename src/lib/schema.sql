@@ -99,6 +99,9 @@ CREATE TABLE IF NOT EXISTS compass_config (
   ai_mode TEXT NOT NULL DEFAULT 'api',
   materials_mode TEXT NOT NULL DEFAULT 'summary',
   reasoning_model TEXT NOT NULL DEFAULT 'claude-sonnet-4-6',
+  local_base_url TEXT NOT NULL DEFAULT 'http://localhost:1234/v1',
+  local_model TEXT NOT NULL DEFAULT '',
+  local_api_key TEXT,
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

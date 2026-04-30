@@ -1,5 +1,5 @@
 import { getModel } from './client';
-import { callAiApi, callAiCli } from './call';
+import { callAiApi, callAiCli, callAiLocal } from './call';
 import { extractJson } from './parse-json';
 import { getAiMode, getMaterialsMode } from '../queries/compass';
 import { getSourceFile, getResumeVersionLabels } from '../queries/source-files';
@@ -213,6 +213,16 @@ export async function generateMaterials(role: Role, modeOverride?: AiMode): Prom
       operation: 'generate_materials',
       systemPrompt,
       userPrompt,
+      context,
+    });
+    rawResponse = result.text;
+  } else if (aiMode === 'local') {
+    const result = await callAiLocal({
+      operation: 'generate_materials',
+      systemPrompt,
+      userPrompt,
+      temperature: 0.4,
+      maxTokens: materialsMode === 'full' ? 8192 : 4096,
       context,
     });
     rawResponse = result.text;

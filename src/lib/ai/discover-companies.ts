@@ -1,4 +1,4 @@
-import { callAiApi, callAiCli } from './call';
+import { callAiApi, callAiCli, callAiLocal } from './call';
 import { extractJson } from './parse-json';
 import { getSourceFile } from '../queries/source-files';
 import {
@@ -105,6 +105,18 @@ export async function discoverCompanies(options: {
       operation: 'discover_companies',
       systemPrompt: SYSTEM_PROMPT,
       userPrompt: buildFullUserPrompt(options.roleType),
+      context: { type: 'discovery_search' },
+    });
+    raw = result.text;
+    cost = result.cost;
+    usedModel = result.model;
+  } else if (mode === 'local') {
+    const result = await callAiLocal({
+      operation: 'discover_companies',
+      systemPrompt: SYSTEM_PROMPT,
+      userPrompt: buildFullUserPrompt(options.roleType),
+      temperature: 0.5,
+      maxTokens: 4096,
       context: { type: 'discovery_search' },
     });
     raw = result.text;

@@ -9,7 +9,9 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import { getAnthropicClient } from './client';
 import { claudeCli } from './cli';
+import { callLocalChat } from './local';
 import { computeCost, DEFAULT_MODEL } from './pricing';
+import { getLocalConfig } from '../queries/compass';
 import { insertAiUsageLog } from '../queries/ai-usage';
 
 export interface LogContext {
@@ -123,6 +125,54 @@ export async function callAiCli(opts: CallCliOpts): Promise<AiCallResult> {
     insertAiUsageLog({
       operation: opts.operation,
       model: 'cli',
+      input_tokens: 0,
+      output_tokens: 0,
+      cost_usd: 0,
+      context_type: opts.context?.type ?? null,
+      context_id: opts.context?.id ?? null,
+      error: msg,
+    });
+    throw err;
+  }
+}
+
+interface CallLocalOpts {
+  operation: string;
+  systemPrompt: string;
+  userPrompt: string;
+  temperature?: number;
+  maxTokens?: number;
+  context?: LogContext;
+}
+
+export async function callAiLocal(opts: CallLocalOpts): Promise<AiCallResult> {
+  const cfg = getLocalConfig();
+  const modelLabel = cfg.model ? `local:${cfg.model}` : 'local';
+  try {
+    const text = await callLocalChat({
+      baseUrl: cfg.base_url,
+      model: cfg.model,
+      apiKey: cfg.api_key,
+      systemPrompt: opts.systemPrompt,
+      userPrompt: opts.userPrompt,
+      temperature: opts.temperature,
+      maxTokens: opts.maxTokens,
+    });
+    const logId = insertAiUsageLog({
+      operation: opts.operation,
+      model: modelLabel,
+      input_tokens: 0,
+      output_tokens: 0,
+      cost_usd: 0,
+      context_type: opts.context?.type ?? null,
+      context_id: opts.context?.id ?? null,
+    });
+    return { text, logId, cost: 0, model: modelLabel };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    insertAiUsageLog({
+      operation: opts.operation,
+      model: modelLabel,
       input_tokens: 0,
       output_tokens: 0,
       cost_usd: 0,

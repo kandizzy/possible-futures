@@ -148,7 +148,7 @@ export interface Person {
   notes: string | null;
 }
 
-export type AiMode = 'api' | 'cli';
+export type AiMode = 'api' | 'cli' | 'local';
 export type MaterialsMode = 'full' | 'summary';
 
 export type AtsProvider = 'greenhouse' | 'lever' | 'ashby' | 'workable';
@@ -281,6 +281,9 @@ export interface CompassConfig {
   ai_mode: AiMode;
   materials_mode: MaterialsMode;
   reasoning_model: string;
+  local_base_url: string;
+  local_model: string;
+  local_api_key: string | null;
   updated_at: string;
 }
 

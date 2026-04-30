@@ -10,7 +10,16 @@ interface CompassRow {
   ai_mode: string;
   materials_mode: string;
   reasoning_model: string | null;
+  local_base_url: string | null;
+  local_model: string | null;
+  local_api_key: string | null;
   updated_at: string;
+}
+
+export interface LocalConfig {
+  base_url: string;
+  model: string;
+  api_key: string | null;
 }
 
 export function getCompassConfig(): CompassConfig | null {
@@ -24,6 +33,9 @@ export function getCompassConfig(): CompassConfig | null {
     ai_mode: (row.ai_mode || 'api') as AiMode,
     materials_mode: (row.materials_mode || 'summary') as MaterialsMode,
     reasoning_model: row.reasoning_model || DEFAULT_MODEL,
+    local_base_url: row.local_base_url || 'http://localhost:1234/v1',
+    local_model: row.local_model || '',
+    local_api_key: row.local_api_key || null,
     updated_at: row.updated_at,
   };
 }
@@ -87,4 +99,20 @@ export function getReasoningModel(): string {
 export function setReasoningModel(model: string): void {
   const db = getDb();
   db.prepare('UPDATE compass_config SET reasoning_model = ?, updated_at = datetime(\'now\') WHERE id = 1').run(model);
+}
+
+export function getLocalConfig(): LocalConfig {
+  const config = getCompassConfig();
+  return {
+    base_url: config?.local_base_url || 'http://localhost:1234/v1',
+    model: config?.local_model || '',
+    api_key: config?.local_api_key || null,
+  };
+}
+
+export function setLocalConfig(cfg: LocalConfig): void {
+  const db = getDb();
+  db.prepare(
+    "UPDATE compass_config SET local_base_url = ?, local_model = ?, local_api_key = ?, updated_at = datetime('now') WHERE id = 1",
+  ).run(cfg.base_url, cfg.model, cfg.api_key);
 }

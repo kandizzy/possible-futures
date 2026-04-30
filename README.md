@@ -49,6 +49,7 @@ At the end, the intake compiles three working documents and saves them to both t
 - **One of these** for AI features:
   - An [Anthropic API key](https://platform.claude.com/) (pay-per-use, ~$0.10/evaluation with Sonnet)
   - [Claude CLI](https://docs.anthropic.com/en/docs/claude-code) installed with a Max/Pro subscription (free per-use)
+  - A local model server like [LM Studio](https://lmstudio.ai/) or [Ollama](https://ollama.com/) (zero per-call cost, data never leaves your laptop). Tested working with Gemma 4 E4B; larger models will score with more nuance. Load the model with a context length of **32K or higher** because each scoring call sends the full Book + Compass (~30–40K tokens) to the model. Configure in Settings → AI Backend → Local model.
 
 ### Using nvm
 
