@@ -26,7 +26,9 @@ When you identify skill or experience gaps between the person's background and t
 
 Only include gaps when they genuinely exist. For strong fits, return an empty array. Don't manufacture gaps.
 
-Return ONLY valid JSON.`;
+You must also extract these metadata fields from the posting and include them in the response: \`role_title\`, \`company\`, \`location\`, and \`salary_range\`. Look at the headline, sub-headline, "About [Company]" sections, footer, hiring URL, or any place where the company is named. The hiring company is the one whose ATS the posting lives on, not their clients or partners. Only return null for these fields if the posting genuinely contains no signal at all.
+
+Return ONLY valid JSON. Include every field in the schema.`;
 }
 
 function getScoringJsonSchema(): string {
@@ -54,10 +56,10 @@ function getScoringJsonSchema(): string {
   "red_flags_found": ["<words from red flag list found in posting>"],
   "fit_summary": "<2-3 paragraph narrative: what maps, what's a gap, overall take>",
   "calibration_notes": "<if any past calibrations influenced scoring, note which and how>",
-  "role_title": "<extracted role title>",
-  "company": "<extracted company name>",
-  "salary_range": "<extracted salary or null>",
-  "location": "<extracted location>",
+  "role_title": "<the job title as stated in the posting, e.g. 'Senior Frontend Engineer'>",
+  "company": "<the hiring company's name, e.g. 'Stripe' or 'Vercel' — never null if the posting contains any company reference at all>",
+  "salary_range": "<extracted salary range, e.g. '$140k-$180k', or null if not stated>",
+  "location": "<extracted location, e.g. 'Remote (US)' or 'San Francisco', or null if not stated>",
   "gap_analysis": [
     {
       "gap": "<skill or experience the role wants that the person lacks>",

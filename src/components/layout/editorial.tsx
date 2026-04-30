@@ -165,6 +165,52 @@ export function MetaRow({
   );
 }
 
+/** Three pulsing stamp-colored dots. Use inside a panel or beside text. */
+export function LoadingDots() {
+  return (
+    <div className="flex gap-1.5" aria-hidden>
+      <span
+        className="h-2 w-2 rounded-full bg-stamp animate-pulse"
+        style={{ animationDelay: '0ms' }}
+      />
+      <span
+        className="h-2 w-2 rounded-full bg-stamp animate-pulse"
+        style={{ animationDelay: '300ms' }}
+      />
+      <span
+        className="h-2 w-2 rounded-full bg-stamp animate-pulse"
+        style={{ animationDelay: '600ms' }}
+      />
+    </div>
+  );
+}
+
+/** Bordered loading panel — three dots, italic message, optional caption. */
+export function LoadingPanel({
+  message,
+  caption,
+}: {
+  message: string;
+  caption?: string;
+}) {
+  return (
+    <div className="p-6 md:p-8 border border-rule bg-paper-2/40">
+      <div className="flex items-center gap-4">
+        <LoadingDots />
+        <span
+          className="font-serif italic text-[17px] text-ink"
+          style={{ fontVariationSettings: '"opsz" 17, "SOFT" 50' }}
+        >
+          {message}
+        </span>
+      </div>
+      {caption && (
+        <p className="mt-3 font-mono text-[11px] text-ink-3">{caption}</p>
+      )}
+    </div>
+  );
+}
+
 /** Empty-state block for when a catalog / list is empty. */
 export function EmptyState({
   line,

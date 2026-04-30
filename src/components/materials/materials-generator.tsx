@@ -8,7 +8,7 @@ import {
   getSavedMaterials,
 } from '@/actions/generate-materials';
 import { generateBaseResumesAction } from '@/actions/settings';
-import { Section } from '@/components/layout/editorial';
+import { Section, LoadingPanel } from '@/components/layout/editorial';
 import type { MaterialsResponse, MaterialsMode } from '@/lib/types';
 import Link from 'next/link';
 
@@ -139,23 +139,29 @@ export function MaterialsGenerator({
     <div className="space-y-12">
       {!materials && (
         <div>
-          <button onClick={handleGenerate} disabled={isPending} className="btn-stamp">
-            {isPending ? 'Generating' : 'Generate materials'}
-          </button>
-          {isPending && !generatingResumes && (
-            <p
-              className="mt-3 font-serif italic text-[13px] text-ink-2"
-              style={{ fontVariationSettings: '"opsz" 13, "SOFT" 40' }}
-            >
-              {materialsMode === 'summary'
-                ? 'Writing cover letter and summary. 15-30 seconds.'
-                : 'Writing cover letter, resume, and summary. 30-60 seconds.'}
-            </p>
+          {!isPending && (
+            <button onClick={handleGenerate} className="btn-stamp">
+              Generate materials
+            </button>
           )}
-          {error && (
+          {isPending && !generatingResumes && (
+            <LoadingPanel
+              message={
+                materialsMode === 'summary'
+                  ? 'Writing your cover letter and summary'
+                  : 'Writing your cover letter, resume, and summary'
+              }
+              caption={
+                materialsMode === 'summary'
+                  ? '15–30 seconds via Anthropic API · several minutes via local model'
+                  : '30–60 seconds via Anthropic API · several minutes via local model'
+              }
+            />
+          )}
+          {!isPending && error && (
             <div className="mt-6 p-5 border border-stamp bg-stamp/5">
               <div className="smallcaps text-[9px] text-stamp mb-2">Error</div>
-              <p className="font-serif italic text-[14px] text-ink">{error}</p>
+              <p className="font-serif italic text-[14px] text-ink whitespace-pre-line">{error}</p>
             </div>
           )}
         </div>
@@ -189,13 +195,12 @@ export function MaterialsGenerator({
             </Link>
           </div>
           {generatingResumes && (
-            <p
-              className="mt-3 font-serif italic text-[12px] text-ink-2"
-              style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
-            >
-              Generating {missingResumes.length} base resume
-              {missingResumes.length === 1 ? '' : 's'}. 30-60 seconds each.
-            </p>
+            <div className="mt-4">
+              <LoadingPanel
+                message={`Drafting ${missingResumes.length} base resume${missingResumes.length === 1 ? '' : 's'}`}
+                caption="30–60 seconds each via Anthropic API · several minutes each via local model"
+              />
+            </div>
           )}
           {resumeGenStatus && (
             <p

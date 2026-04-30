@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { evaluatePosting, type EvaluateResult } from '@/actions/evaluate';
 import { ScoringResults } from './scoring-results';
+import { LoadingPanel } from '@/components/layout/editorial';
 
 export function EvaluateForm({
   aiMode,
@@ -133,25 +134,11 @@ export function EvaluateForm({
 
       {/* Scoring indicator */}
       {isPending && (
-        <div className="mt-8 p-6 md:p-8 border border-rule bg-paper-2/40">
-          <div className="flex items-center gap-4">
-            <div className="flex gap-1.5" aria-hidden>
-              <span className="h-2 w-2 rounded-full bg-stamp animate-pulse" style={{ animationDelay: '0ms' }} />
-              <span className="h-2 w-2 rounded-full bg-stamp animate-pulse" style={{ animationDelay: '300ms' }} />
-              <span className="h-2 w-2 rounded-full bg-stamp animate-pulse" style={{ animationDelay: '600ms' }} />
-            </div>
-            <span
-              className="font-serif italic text-[17px] text-ink"
-              style={{ fontVariationSettings: '"opsz" 17, "SOFT" 50' }}
-            >
-              Reading the posting against your compass
-            </span>
-          </div>
-          <p
-            className="mt-3 font-mono text-[11px] text-ink-3"
-          >
-            Scoring via {aiMode === 'cli' ? 'Claude CLI' : aiMode === 'local' ? 'your local model' : 'Anthropic API'} · typically 15-30 seconds{aiMode === 'cli' ? ' (CLI can be slower)' : aiMode === 'local' ? ' (local can be slower)' : ''}
-          </p>
+        <div className="mt-8">
+          <LoadingPanel
+            message="Reading the posting against your compass"
+            caption={`Scoring via ${aiMode === 'cli' ? 'Claude CLI' : aiMode === 'local' ? 'your local model' : 'Anthropic API'} · typically 15-30 seconds${aiMode === 'cli' ? ' (CLI can be slower)' : aiMode === 'local' ? ' (local can be slower)' : ''}`}
+          />
         </div>
       )}
 
