@@ -260,8 +260,9 @@ If you already have a career history document (a Book, career narrative, or simi
 1. Place your file in the parent directory as `[Your_Name]_Possible_Futures.md`.
 2. Set `PROJECT_BOOK` in `.env.local` to the filename.
 3. Add a `JOB_SEARCH_COMPASS.md` and `APPLICATION_PLAYBOOK.md` alongside it. The structure the parser expects is documented in `scripts/seed.ts` and `src/lib/parsers/`.
-4. Run `npm run seed` to load the markdown files into the database.
-5. Start the app with `npm run dev`.
+4. Run `npm install` from inside `possible-futures/` if you haven't already.
+5. Run `npm run seed` to load the markdown files into the database.
+6. Start the app with `npm run dev`.
 
 Most users should use the in-app intake instead. It produces the same files in the correct format with no hand-editing.
 
