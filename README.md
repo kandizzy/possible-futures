@@ -8,6 +8,10 @@ Runs entirely on your laptop. Your career history never leaves your machine.
 
 **Prefer a visual tour?** [View the slide deck →](https://kandizzy.github.io/possible-futures/)
 
+![Animated radar chart cycling through four sample roles — NASA JPL, SETI, Starfleet Academy, SpaceX — with each role's strongest dimension highlighted alongside the rationale.](docs/screenshots/radar-cycle.gif)
+
+_Every job posting is scored on six dimensions — Want, Can, Grow, Pay, Team, Impact — against your personal compass. The shape tells you whether to apply, stretch, or skip._
+
 ## Quick start
 
 ```bash
@@ -26,7 +30,7 @@ Open **http://localhost:3000** and follow the first-run intake. Five short chapt
 1. **Setup** — the basics: your name, the title you want to be read as, the shape of your search.
 2. **Throughline** — the thread that runs through everything you've done. The story you want the AI to tell on your behalf.
 3. **What you're looking for** — signal words, salary floor, location constraints, the roles you'd actually say yes to.
-4. **What you won't tolerate** — red flag words, dealbreakers, the things about your background you never want surfaced.
+4. **What you won't tolerate** — red flag words, dealbreakers, and any context you'd rather keep private (a caregiving year, a health break, a quiet sabbatical) so the AI doesn't drag it into a cover letter.
 5. **Shelf of proof** — the roles, projects, and artifacts that back the throughline up.
 
 At the end, the intake compiles three working documents and saves them to both the database and your `career/` folder so you own portable copies:
@@ -47,7 +51,7 @@ At the end, the intake compiles three working documents and saves them to both t
 
 ## Prerequisites
 
-- **Node.js 22+** — Node 22 is the current Active LTS. Newer majors (23, 24) often work but may lack prebuilt binaries for native dependencies (`better-sqlite3`, `@tailwindcss/oxide`), which drops you into a slow from-source build. Stick with 22 unless you have a reason not to.
+- **Node.js 22+** — Node 22 is the current Active LTS. Newer majors (23, 24) often work but may lack prebuilt binaries for `better-sqlite3`, which drops you into a slow from-source build. Stick with 22 unless you have a reason not to.
 - **One of these** for AI features:
   - An [Anthropic API key](https://platform.claude.com/) (pay-per-use, ~$0.10/evaluation with Sonnet)
   - [Claude CLI](https://docs.anthropic.com/en/docs/claude-code) installed with a Max/Pro subscription (free per-use)
@@ -238,7 +242,7 @@ You don't need to think about this for backups — backing up the whole `career/
 
 ### A note on what's inside your backup
 
-Your backup includes your `.env.local` file with your Anthropic API key. That's convenient for restore but means you should treat the backup itself as sensitive — keep it in a personal cloud folder, not a shared one, and don't email the zip to yourself.
+⚠️ Your backup includes your `.env.local` file with your Anthropic API key. That's convenient for restore but means you should treat the backup itself as sensitive — keep it in a personal cloud folder, not a shared one, and don't email the zip to yourself.
 
 Your backup will also include `node_modules/` — several hundred megabytes of installable dependencies. It's safe to exclude from manual zips to save space; running `npm install` inside `possible-futures/` after restore rebuilds it in a minute or two. Cloud services sync it fine but it does eat storage quota, so keep an eye on that if you're close to a plan limit.
 

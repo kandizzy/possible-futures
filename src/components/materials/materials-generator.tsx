@@ -51,6 +51,9 @@ export function MaterialsGenerator({
   const [editReason, setEditReason] = useState('');
   const [appStatus, setAppStatus] = useState<string>('Draft');
   const [appDateApplied, setAppDateApplied] = useState<string | null>(null);
+  const [pendingKind, setPendingKind] = useState<'generate' | 'save' | null>(null);
+
+  const isGenerating = isPending && pendingKind === 'generate';
 
   useEffect(() => {
     if (materialsMode === 'summary') {
@@ -118,6 +121,7 @@ export function MaterialsGenerator({
     setError('');
     setSaveStatus('');
     setEditReason('');
+    setPendingKind('generate');
     startTransition(async () => {
       const res = await generateMaterialsAction(roleId);
       if (res.success && res.materials) {
@@ -132,12 +136,14 @@ export function MaterialsGenerator({
       } else {
         setError(res.error || 'Unknown error');
       }
+      setPendingKind(null);
     });
   }
 
   function handleSave() {
     if (!materials) return;
     setSaveStatus('Saving…');
+    setPendingKind('save');
     startTransition(async () => {
       const res = await exportMaterials(
         roleId,
@@ -154,33 +160,38 @@ export function MaterialsGenerator({
       } else {
         setSaveStatus(`Save failed: ${res.error}`);
       }
+      setPendingKind(null);
     });
   }
 
   return (
     <div className="space-y-12">
-      {!materials && (
+      {/* Generation loading — shown for both first-time and regenerate flows */}
+      {isGenerating && !generatingResumes && (
+        <LoadingPanel
+          message={
+            materials
+              ? materialsMode === 'summary'
+                ? 'Rewriting your cover letter and summary'
+                : 'Rewriting your cover letter, resume, and summary'
+              : materialsMode === 'summary'
+                ? 'Writing your cover letter and summary'
+                : 'Writing your cover letter, resume, and summary'
+          }
+          caption={
+            materialsMode === 'summary'
+              ? '15–30 seconds via Anthropic API · several minutes via local model'
+              : '30–60 seconds via Anthropic API · several minutes via local model'
+          }
+        />
+      )}
+
+      {!materials && !isGenerating && (
         <div>
-          {!isPending && (
-            <button onClick={handleGenerate} className="btn-stamp">
-              Generate materials
-            </button>
-          )}
-          {isPending && !generatingResumes && (
-            <LoadingPanel
-              message={
-                materialsMode === 'summary'
-                  ? 'Writing your cover letter and summary'
-                  : 'Writing your cover letter, resume, and summary'
-              }
-              caption={
-                materialsMode === 'summary'
-                  ? '15–30 seconds via Anthropic API · several minutes via local model'
-                  : '30–60 seconds via Anthropic API · several minutes via local model'
-              }
-            />
-          )}
-          {!isPending && error && (
+          <button onClick={handleGenerate} className="btn-stamp">
+            Generate materials
+          </button>
+          {error && (
             <div className="mt-6 p-5 border border-stamp bg-stamp/5">
               <div className="smallcaps text-[9px] text-stamp mb-2">Error</div>
               <p className="font-serif italic text-[14px] text-ink whitespace-pre-line">{error}</p>
