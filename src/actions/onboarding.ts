@@ -48,7 +48,11 @@ export async function saveIntakeProgress(formData: FormData): Promise<
  * attempt to write the files to disk in the parent directory, and mark
  * onboarding complete.
  */
-export async function publishIntake(): Promise<
+export async function publishIntake(overrides?: {
+  book?: string;
+  compass?: string;
+  playbook?: string;
+}): Promise<
   { success: true; diskPaths?: string[]; diskError?: string } | { success: false; error: string }
 > {
   const draft = getOnboardingDraft();
@@ -57,7 +61,14 @@ export async function publishIntake(): Promise<
     return { success: false, error: 'Please finish Chapter I before publishing.' };
   }
 
-  const { book, compass, playbook } = compileIntake(draft.answers);
+  const compiled = compileIntake(draft.answers);
+  // If the user edited any of the three documents on the publish page, save
+  // those edits instead of the freshly-compiled markdown. Note that re-running
+  // Revise will recompile from answers and overwrite these edits — that's a
+  // known trade-off documented on the publish page.
+  const book = overrides?.book ?? compiled.book;
+  const compass = overrides?.compass ?? compiled.compass;
+  const playbook = overrides?.playbook ?? compiled.playbook;
 
   // Source files — use the same filenames the app already expects
   upsertSourceFile('PROJECT_BOOK', book);

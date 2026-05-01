@@ -214,9 +214,12 @@ export async function confirmTrackCompany(
   for (const posting of toScore) {
     if (posting.url && existingUrls.has(posting.url)) continue;
     try {
-      const scoring = await scorePosting(posting.posting_text || '', undefined, {
-        type: 'role',
-      });
+      const scoring = await scorePosting(
+        posting.posting_text || '',
+        undefined,
+        { type: 'role' },
+        posting.url || undefined,
+      );
       insertRole({
         title: posting.title || scoring.role_title || 'Untitled',
         company: scoring.company || suggestion.name,

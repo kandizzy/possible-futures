@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getSettings, getSourceFilePaths } from '@/actions/settings';
+import { getSettings, getSourceFilePaths, getBaseResumes, getSourceFileContent } from '@/actions/settings';
 import { getAllSourceFiles } from '@/lib/queries/source-files';
 import { getOnboardingState } from '@/lib/queries/onboarding';
 import { AiModeToggle } from '@/components/settings/ai-mode-toggle';
@@ -7,6 +7,8 @@ import { MaterialsModeToggle } from '@/components/settings/materials-mode-toggle
 import { ReasoningModelToggle } from '@/components/settings/reasoning-model-toggle';
 import { CompassEditor } from '@/components/settings/compass-editor';
 import { SourceFilesRefresh } from '@/components/settings/source-files-refresh';
+import { BaseResumesEditor } from '@/components/settings/base-resumes-editor';
+import { SourceFileEditor } from '@/components/settings/source-file-editor';
 import { PageHeader, Panel } from '@/components/layout/editorial';
 import type { AiMode, MaterialsMode } from '@/lib/types';
 
@@ -15,6 +17,9 @@ export default async function SettingsPage() {
   const sourceFiles = getAllSourceFiles();
   const sourceFilePaths = await getSourceFilePaths();
   const onboardingState = getOnboardingState();
+  const baseResumes = await getBaseResumes();
+  const compassFile = await getSourceFileContent('JOB_SEARCH_COMPASS.md');
+  const playbookFile = await getSourceFileContent('APPLICATION_PLAYBOOK.md');
 
   return (
     <div className="space-y-14">
@@ -66,6 +71,25 @@ export default async function SettingsPage() {
           initialRedFlagWords={settings.red_flag_words}
           initialCompensationFloor={settings.compensation_floor}
         />
+        {compassFile && (
+          <SourceFileEditor
+            title="Compass markdown"
+            description="Edit the full Compass markdown directly. Saving rewrites JOB_SEARCH_COMPASS.md and refreshes the source-file cache so the next AI call uses your changes."
+            filename="JOB_SEARCH_COMPASS.md"
+            initialContent={compassFile.content}
+            exists={compassFile.exists}
+          />
+        )}
+        {playbookFile && (
+          <SourceFileEditor
+            title="Playbook"
+            description="Resume rules, cover-letter rules, the Things-to-Never-Do list, and the Role-Type Emphasis Guide. The AI reads this on every materials generation."
+            filename="APPLICATION_PLAYBOOK.md"
+            initialContent={playbookFile.content}
+            exists={playbookFile.exists}
+          />
+        )}
+        <BaseResumesEditor resumes={baseResumes} />
         <SourceFilesRefresh
           initialFiles={sourceFiles.map(f => ({ filename: f.filename, last_loaded_at: f.last_loaded_at }))}
           paths={sourceFilePaths}

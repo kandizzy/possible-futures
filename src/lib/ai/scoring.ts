@@ -33,6 +33,7 @@ export async function scorePosting(
   postingText: string,
   modeOverride?: AiMode,
   context?: LogContext,
+  url?: string | null,
 ): Promise<ScoringResponse> {
   const mode = modeOverride || getAiMode();
 
@@ -42,7 +43,7 @@ export async function scorePosting(
     const result = await callAiCli({
       operation: 'score_posting',
       systemPrompt: getScoringSystemPrompt(),
-      userPrompt: buildScoringUserPrompt(postingText),
+      userPrompt: buildScoringUserPrompt(postingText, url),
       context,
     });
     rawResponse = result.text;
@@ -50,7 +51,7 @@ export async function scorePosting(
     const result = await callAiLocal({
       operation: 'score_posting',
       systemPrompt: getScoringSystemPrompt(),
-      userPrompt: buildScoringUserPrompt(postingText),
+      userPrompt: buildScoringUserPrompt(postingText, url),
       temperature: 0.2,
       maxTokens: 4096,
       context,
@@ -77,7 +78,7 @@ export async function scorePosting(
             },
             {
               type: 'text',
-              text: buildScoringVolatileSuffix(postingText),
+              text: buildScoringVolatileSuffix(postingText, url),
             },
           ],
         },

@@ -6,6 +6,8 @@ AI is used on both sides of the hiring process now. It reads your resume, ranks 
 
 Runs entirely on your laptop. Your career history never leaves your machine.
 
+**Prefer a visual tour?** [View the slide deck →](https://kandizzy.github.io/possible-futures/)
+
 ## Quick start
 
 ```bash

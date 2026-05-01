@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getAllRoles, getRoleById, insertRole, updateRoleStatus, updateRoleScores, updateRoleNotes, getRoleStatusCounts, deleteRole } from '@/lib/queries/roles';
+import { getAllRoles, getRoleById, insertRole, updateRoleStatus, updateRoleScores, updateRoleNotes, getRoleStatusCounts, deleteRole, archiveRole, unarchiveRole, getArchivedRoles, getArchivedRoleCount } from '@/lib/queries/roles';
 import { insertCalibration } from '@/lib/queries/calibrations';
 import { getDb } from '@/lib/db';
 import { makeAiScores } from '@/test/db-helper';
@@ -203,5 +203,57 @@ describe('deleteRole', () => {
 
   it('is a no-op for unknown ids', () => {
     expect(() => deleteRole(9999)).not.toThrow();
+  });
+});
+
+describe('archiveRole / unarchiveRole', () => {
+  it('marks the role archived and stamps the date', () => {
+    const id = insertTestRole();
+    archiveRole(id);
+    const role = getRoleById(id)!;
+    expect(role.archived).toBe(true);
+    expect(role.date_archived).toBeTruthy();
+  });
+
+  it('hides archived roles from getAllRoles by default', () => {
+    const keepId = insertTestRole({ company: 'Active' });
+    const dropId = insertTestRole({ company: 'Past' });
+    archiveRole(dropId);
+    const all = getAllRoles();
+    expect(all.map((r) => r.id)).toContain(keepId);
+    expect(all.map((r) => r.id)).not.toContain(dropId);
+  });
+
+  it('returns archived roles via getArchivedRoles', () => {
+    const id = insertTestRole({ company: 'Past' });
+    archiveRole(id);
+    const archived = getArchivedRoles();
+    expect(archived.map((r) => r.id)).toEqual([id]);
+  });
+
+  it('counts archived roles', () => {
+    insertTestRole();
+    const a = insertTestRole();
+    const b = insertTestRole();
+    archiveRole(a);
+    archiveRole(b);
+    expect(getArchivedRoleCount()).toBe(2);
+  });
+
+  it('unarchive clears the flag and date', () => {
+    const id = insertTestRole();
+    archiveRole(id);
+    unarchiveRole(id);
+    const role = getRoleById(id)!;
+    expect(role.archived).toBe(false);
+    expect(role.date_archived).toBeNull();
+  });
+
+  it('archived roles are excluded from status counts', () => {
+    const a = insertTestRole({ status: 'Applied' });
+    insertTestRole({ status: 'Applied' });
+    archiveRole(a);
+    const counts = getRoleStatusCounts();
+    expect(counts['Applied']).toBe(1);
   });
 });

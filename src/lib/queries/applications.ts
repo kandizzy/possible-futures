@@ -3,10 +3,14 @@ import type { Application, ResumeVersion } from '../types';
 
 export function getAllApplications(): (Application & { role_title: string; role_company: string })[] {
   const db = getDb();
+  // Drafts (rows auto-created when generating materials but never submitted)
+  // don't belong on the Applications list. Filter them out at the query layer
+  // so every consumer sees only real applications.
   return db.prepare(`
     SELECT a.*, r.title as role_title, r.company as role_company
     FROM applications a
     JOIN roles r ON r.id = a.role_id
+    WHERE a.current_status != 'Draft'
     ORDER BY a.date_applied DESC NULLS LAST
   `).all() as (Application & { role_title: string; role_company: string })[];
 }
@@ -67,6 +71,7 @@ export function updateApplicationNotes(id: number, notes: string): void {
 export function updateApplicationMaterials(id: number, data: {
   cover_letter_text: string;
   resume_summary_text: string;
+  resume_text?: string;
   resume_version_used: string;
   version_folder_path?: string;
   cover_letter_ai_draft?: string;
@@ -75,12 +80,13 @@ export function updateApplicationMaterials(id: number, data: {
   if (data.cover_letter_ai_draft) {
     db.prepare(`
       UPDATE applications
-      SET cover_letter_text = ?, resume_summary_text = ?, resume_version_used = ?,
+      SET cover_letter_text = ?, resume_summary_text = ?, resume_text = ?, resume_version_used = ?,
           version_folder_path = ?, cover_letter_generated = 1, cover_letter_ai_draft = ?
       WHERE id = ?
     `).run(
       data.cover_letter_text,
       data.resume_summary_text,
+      data.resume_text || null,
       data.resume_version_used,
       data.version_folder_path || null,
       data.cover_letter_ai_draft,
@@ -89,12 +95,13 @@ export function updateApplicationMaterials(id: number, data: {
   } else {
     db.prepare(`
       UPDATE applications
-      SET cover_letter_text = ?, resume_summary_text = ?, resume_version_used = ?,
+      SET cover_letter_text = ?, resume_summary_text = ?, resume_text = ?, resume_version_used = ?,
           version_folder_path = ?, cover_letter_generated = 1
       WHERE id = ?
     `).run(
       data.cover_letter_text,
       data.resume_summary_text,
+      data.resume_text || null,
       data.resume_version_used,
       data.version_folder_path || null,
       id,

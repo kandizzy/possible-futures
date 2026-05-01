@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { deleteRole, getRoleById, updateRoleMetadata, type RoleMetadataPatch } from '@/lib/queries/roles';
+import { archiveRole, deleteRole, getRoleById, unarchiveRole, updateRoleMetadata, type RoleMetadataPatch } from '@/lib/queries/roles';
 
 export interface UpdateRoleMetadataResult {
   ok: boolean;
@@ -45,6 +45,48 @@ export async function updateRoleMetadataAction(
   revalidatePath(`/roles/${id}`);
   revalidatePath('/');
   revalidatePath('/applications');
+  return { ok: true };
+}
+
+export async function archiveRoleAction(formData: FormData): Promise<void> {
+  const idRaw = formData.get('id');
+  const id = Number(idRaw);
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error('Missing or invalid role id.');
+  }
+
+  const existing = getRoleById(id);
+  if (!existing) {
+    throw new Error('Role not found.');
+  }
+
+  archiveRole(id);
+
+  revalidatePath(`/roles/${id}`);
+  revalidatePath('/');
+  revalidatePath('/applications');
+  revalidatePath('/archive');
+  redirect('/');
+}
+
+export async function unarchiveRoleAction(formData: FormData): Promise<{ ok: boolean; error?: string }> {
+  const idRaw = formData.get('id');
+  const id = Number(idRaw);
+  if (!Number.isInteger(id) || id <= 0) {
+    return { ok: false, error: 'Missing or invalid role id.' };
+  }
+
+  const existing = getRoleById(id);
+  if (!existing) {
+    return { ok: false, error: 'Role not found.' };
+  }
+
+  unarchiveRole(id);
+
+  revalidatePath(`/roles/${id}`);
+  revalidatePath('/');
+  revalidatePath('/applications');
+  revalidatePath('/archive');
   return { ok: true };
 }
 

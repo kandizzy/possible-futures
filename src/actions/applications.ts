@@ -1,8 +1,9 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { insertApplication, updateApplicationStatus, updateApplicationNotes } from '@/lib/queries/applications';
-import { updateRoleStatus } from '@/lib/queries/roles';
+import { insertApplication, updateApplicationStatus, updateApplicationNotes, getApplicationByRoleId, upsertApplicationForRole } from '@/lib/queries/applications';
+import { updateRoleStatus, getRoleById } from '@/lib/queries/roles';
+import { getDb } from '@/lib/db';
 import type { ResumeVersion, RoleStatus } from '@/lib/types';
 
 const VALID_APP_STATUSES = new Set(['Submitted', 'Phone Screen', 'Interview', 'Take Home', 'Offer', 'Rejected', 'Withdrawn']);
@@ -52,6 +53,49 @@ export async function changeApplicationStatus(formData: FormData): Promise<{ suc
     return { success: false, error: `Failed to update status: ${message}` };
   }
   revalidatePath('/applications');
+  return { success: true };
+}
+
+export async function markApplicationSubmitted(formData: FormData): Promise<{ success: boolean; error?: string }> {
+  const roleId = Number(formData.get('role_id'));
+  if (!roleId || !Number.isInteger(roleId)) {
+    return { success: false, error: 'Role id is required.' };
+  }
+  if (!getRoleById(roleId)) {
+    return { success: false, error: 'Role not found.' };
+  }
+
+  const appId = upsertApplicationForRole(roleId);
+  const today = new Date().toISOString().split('T')[0];
+  const db = getDb();
+  db.prepare(
+    "UPDATE applications SET current_status = 'Submitted', date_applied = ? WHERE id = ?",
+  ).run(today, appId);
+  updateRoleStatus(roleId, 'Applied');
+
+  revalidatePath('/');
+  revalidatePath('/applications');
+  revalidatePath(`/roles/${roleId}`);
+  return { success: true };
+}
+
+export async function unmarkApplicationSubmitted(formData: FormData): Promise<{ success: boolean; error?: string }> {
+  const roleId = Number(formData.get('role_id'));
+  if (!roleId || !Number.isInteger(roleId)) {
+    return { success: false, error: 'Role id is required.' };
+  }
+  const app = getApplicationByRoleId(roleId);
+  if (!app) {
+    return { success: false, error: 'No application to revert.' };
+  }
+  const db = getDb();
+  db.prepare(
+    "UPDATE applications SET current_status = 'Draft', date_applied = NULL WHERE id = ?",
+  ).run(app.id);
+
+  revalidatePath('/');
+  revalidatePath('/applications');
+  revalidatePath(`/roles/${roleId}`);
   return { success: true };
 }
 

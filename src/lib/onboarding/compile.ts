@@ -451,12 +451,13 @@ const DEFAULT_BANNED_WORDS = [
 ];
 
 const DEFAULT_RESUME_RULES = [
-  'Two pages max. No exceptions.',
+  'Two pages is the default — applies to most roles where the reader is generalist or skimming. Senior IC roles at companies that genuinely read (frontier AI labs, principal-engineering teams) can run 3-4 pages if every line earns its place. The rule is "no fluff," not "fewer pages."',
   'Lead with the clearest title for the role, then a 3-4 sentence summary that mirrors the posting.',
   'Tailor the summary to each role. Never send the same summary twice.',
   'Keep roles in reverse chronological order under Experience.',
   'Use sans-serif fonts (Arial or similar) for ATS compatibility.',
   'No photo, no "References available upon request," no objective statement.',
+  'Always render personal links (ck.land, GitHub repos, project URLs) as proper markdown hyperlinks like `[ck.land](https://ck.land)`. Plain-text URLs don\'t render as clickable in the PDF and lose their value.',
 ];
 
 const DEFAULT_COVER_LETTER_RULES = [
@@ -471,6 +472,8 @@ const DEFAULT_NEVER_DO = [
   'Never promise skills you do not actually have.',
   'Never include a photo, an objective statement, or "References available upon request."',
   'Never send a resume without reading the posting first.',
+  'Never state tenure as "20+ years" or any "Nx years" framing in the summary or anywhere else. It invites ageism and reduces a long career to a number. Let the dated experience entries speak for themselves.',
+  'Never put "(Contract)" or "Contractor" next to a job title. Contract status is irrelevant to a hiring reader and quietly devalues the work. Just write the title and the company.',
 ];
 
 const DEFAULT_VERSIONS: IntakeVersion[] = [

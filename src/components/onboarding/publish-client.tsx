@@ -22,16 +22,43 @@ export function PublishClient({ answers, book, compass, playbook }: Props) {
     | { kind: 'done'; diskPaths: string[]; diskError?: string }
   >({ kind: 'idle' });
   const [tab, setTab] = useState<'book' | 'compass' | 'playbook'>('book');
-  const [viewMode, setViewMode] = useState<'preview' | 'source'>('preview');
+  const [viewMode, setViewMode] = useState<'preview' | 'source' | 'edit'>('preview');
+  const [editedBook, setEditedBook] = useState(book);
+  const [editedCompass, setEditedCompass] = useState(compass);
+  const [editedPlaybook, setEditedPlaybook] = useState(playbook);
   const router = useRouter();
 
-  const content = tab === 'book' ? book : tab === 'compass' ? compass : playbook;
+  const content =
+    tab === 'book' ? editedBook : tab === 'compass' ? editedCompass : editedPlaybook;
   const rendered = useMemo(() => marked.parse(content, { async: false }) as string, [content]);
+
+  const dirty =
+    editedBook !== book || editedCompass !== compass || editedPlaybook !== playbook;
+
+  function setEditedContent(next: string) {
+    if (tab === 'book') setEditedBook(next);
+    else if (tab === 'compass') setEditedCompass(next);
+    else setEditedPlaybook(next);
+  }
+
+  function resetCurrentTab() {
+    if (tab === 'book') setEditedBook(book);
+    else if (tab === 'compass') setEditedCompass(compass);
+    else setEditedPlaybook(playbook);
+  }
 
   function handlePublish() {
     setStatus({ kind: 'idle' });
     startTransition(async () => {
-      const res = await publishIntake();
+      const res = await publishIntake(
+        dirty
+          ? {
+              book: editedBook,
+              compass: editedCompass,
+              playbook: editedPlaybook,
+            }
+          : undefined,
+      );
       if (!res.success) {
         setStatus({ kind: 'error', message: res.error });
         return;
@@ -147,43 +174,65 @@ export function PublishClient({ answers, book, compass, playbook }: Props) {
           })}
         </div>
         <div className="flex items-center gap-2 mb-4">
-          <button
-            type="button"
-            onClick={() => setViewMode('preview')}
-            className={`px-3 py-1.5 font-mono text-[11px] border transition-colors ${
-              viewMode === 'preview'
-                ? 'border-ink bg-paper text-ink shadow-[2px_2px_0_var(--ink)]'
-                : 'border-rule bg-paper-2/40 text-ink-3 hover:border-ink-2 hover:text-ink'
-            }`}
-          >
-            Preview
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('source')}
-            className={`px-3 py-1.5 font-mono text-[11px] border transition-colors ${
-              viewMode === 'source'
-                ? 'border-ink bg-paper text-ink shadow-[2px_2px_0_var(--ink)]'
-                : 'border-rule bg-paper-2/40 text-ink-3 hover:border-ink-2 hover:text-ink'
-            }`}
-          >
-            Source
-          </button>
-        </div>
-        <div className="p-6 md:p-8 bg-paper-2/40 border border-rule max-h-[440px] overflow-y-auto">
-          {viewMode === 'preview' ? (
-            <div
-              className="prose prose-sm max-w-none text-ink prose-headings:font-serif prose-headings:tracking-tight prose-headings:text-ink prose-strong:text-ink prose-a:text-stamp"
-              dangerouslySetInnerHTML={{ __html: rendered }}
-            />
-          ) : (
-            <pre
-              className="font-mono text-[12px] leading-[1.65] text-ink-2 whitespace-pre-wrap"
+          {(['preview', 'source', 'edit'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setViewMode(mode)}
+              className={`px-3 py-1.5 font-mono text-[11px] border transition-colors capitalize ${
+                viewMode === mode
+                  ? 'border-ink bg-paper text-ink shadow-[2px_2px_0_var(--ink)]'
+                  : 'border-rule bg-paper-2/40 text-ink-3 hover:border-ink-2 hover:text-ink'
+              }`}
             >
-              {content}
-            </pre>
+              {mode}
+            </button>
+          ))}
+          {dirty && (
+            <span
+              className="ml-2 font-serif italic text-[12px] text-stamp"
+              style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
+            >
+              edited — will be published instead of the auto-compiled version
+            </span>
           )}
         </div>
+        {viewMode === 'edit' ? (
+          <div className="space-y-3">
+            <textarea
+              value={content}
+              onChange={(e) => setEditedContent(e.target.value)}
+              rows={20}
+              className="field w-full font-mono text-[12px] leading-[1.55] resize-y"
+              aria-label={`Edit ${tab}`}
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={resetCurrentTab}
+                className="font-serif italic text-[12px] text-ink-3 hover:text-stamp transition-colors"
+                style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
+              >
+                Reset this tab to compiled
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="p-6 md:p-8 bg-paper-2/40 border border-rule max-h-[440px] overflow-y-auto">
+            {viewMode === 'preview' ? (
+              <div
+                className="prose prose-sm max-w-none text-ink prose-headings:font-serif prose-headings:tracking-tight prose-headings:text-ink prose-strong:text-ink prose-a:text-stamp"
+                dangerouslySetInnerHTML={{ __html: rendered }}
+              />
+            ) : (
+              <pre
+                className="font-mono text-[12px] leading-[1.65] text-ink-2 whitespace-pre-wrap"
+              >
+                {content}
+              </pre>
+            )}
+          </div>
+        )}
         {tab === 'playbook' && (
           <p
             className="mt-3 font-serif italic text-[12px] text-ink-2"
@@ -197,10 +246,12 @@ export function PublishClient({ answers, book, compass, playbook }: Props) {
           className="mt-2 font-serif italic text-[12px] text-ink-3"
           style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
         >
-          All three documents are saved as plain markdown. You can open them in any
-          text editor to add personal rules or refine how Claude writes for you. Keep the
-          existing heading structure (## and ###) intact, as the app parses it to populate
-          your compass. To regenerate from scratch, use Revise in the sidebar.
+          Switch to <span className="not-italic font-mono text-[11px] text-ink-2">Edit</span>{' '}
+          to refine any of the three documents directly before publishing — useful for
+          adding rules the intake didn&apos;t ask about. Keep the existing heading structure
+          (## and ###) intact, as the app parses it to populate your compass. Heads up:
+          re-running Revise will recompile from your intake answers and overwrite these
+          edits, so you can also edit afterward in Settings.
         </p>
         <details className="mt-3">
           <summary className="font-mono text-[11px] text-ink-3 hover:text-stamp transition-colors cursor-pointer">

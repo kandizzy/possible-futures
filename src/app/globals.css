@@ -245,3 +245,27 @@ main, aside {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* Markdown preview — used by MarkdownEditor live preview pane */
+.md-preview { font-family: var(--font-fraunces), Georgia, serif; color: var(--ink); font-size: 14px; line-height: 1.65; }
+.md-preview h1 { font-family: var(--font-fraunces), Georgia, serif; font-size: 28px; line-height: 1.1; letter-spacing: -0.01em; margin: 0 0 0.6em; font-variation-settings: "opsz" 36, "SOFT" 40; }
+.md-preview h2 { font-family: var(--font-fraunces), Georgia, serif; font-size: 18px; line-height: 1.15; margin: 1.4em 0 0.5em; padding-bottom: 0.3em; border-bottom: 1px solid var(--rule); font-variation-settings: "opsz" 24, "SOFT" 50; }
+.md-preview h3 { font-family: var(--font-fraunces), Georgia, serif; font-size: 15px; font-style: italic; margin: 1.1em 0 0.3em; color: var(--ink); font-variation-settings: "opsz" 18, "SOFT" 60; }
+.md-preview h4 { font-family: var(--font-instrument-sans), Helvetica, sans-serif; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2); margin: 1em 0 0.3em; }
+.md-preview p { margin: 0 0 0.8em; }
+.md-preview ul, .md-preview ol { margin: 0 0 0.9em 1.2em; padding: 0; }
+.md-preview li { margin: 0 0 0.3em; }
+.md-preview a { color: var(--stamp); text-decoration: underline; text-decoration-color: var(--rule); }
+.md-preview a:hover { text-decoration-color: var(--stamp); }
+.md-preview strong { font-weight: 600; color: var(--ink); }
+.md-preview em { font-style: italic; }
+.md-preview blockquote { margin: 0.6em 0; padding-left: 1em; border-left: 2px solid var(--rule); color: var(--ink-2); font-style: italic; }
+.md-preview hr { border: 0; border-top: 1px solid var(--rule); margin: 1.5em 0; }
+.md-preview code { font-family: var(--font-jetbrains-mono), monospace; font-size: 12px; background: var(--paper-2); padding: 0.1em 0.35em; border-radius: 2px; }
+.md-preview pre { background: var(--paper-2); padding: 1em; overflow-x: auto; }
+.md-preview pre code { background: transparent; padding: 0; }
+
+
+/* Archive listings — dimmed so the active dashboard reads more loudly */
+.archive-list { opacity: 0.85; }
+

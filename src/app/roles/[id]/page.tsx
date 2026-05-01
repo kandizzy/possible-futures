@@ -16,6 +16,9 @@ import { MarkReviewedButton } from '@/components/discovery/mark-reviewed-button'
 import { RoleHeaderEditor, EditDetailsTrigger } from '@/components/roles/role-header-editor';
 import { ScoreRadar } from '@/components/roles/score-radar';
 import { DeleteRoleButton } from '@/components/roles/delete-role-button';
+import { ArchiveRoleButton } from '@/components/roles/archive-role-button';
+import { RestoreRoleButton } from '@/components/roles/restore-role-button';
+import { MarkSubmittedButton } from '@/components/roles/mark-submitted-button';
 
 export default async function RoleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -175,6 +178,15 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
               >
                 {hasMaterials ? 'View Materials →' : 'Draft Materials →'}
               </Link>
+              {hasMaterials && (
+                <div className="mt-4">
+                  <MarkSubmittedButton
+                    roleId={role.id}
+                    isSubmitted={application?.current_status === 'Submitted'}
+                    dateApplied={application?.date_applied}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </RoleHeaderEditor>
@@ -356,9 +368,22 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
-      {/* Delete */}
-      <div className="pt-8 border-t border-rule-soft">
-        <DeleteRoleButton roleId={role.id} label={`${role.company} — ${role.title}`} />
+      {/* Archive / Restore + Delete */}
+      <div className="pt-8 border-t border-rule-soft space-y-3">
+        {role.archived && (
+          <div className="smallcaps text-[9px] text-ink-3">
+            Archived
+            {role.date_archived ? ` · ${role.date_archived.slice(0, 10)}` : ''}
+          </div>
+        )}
+        <div className="flex flex-wrap items-baseline gap-x-6 gap-y-3">
+          {role.archived ? (
+            <RestoreRoleButton roleId={role.id} />
+          ) : (
+            <ArchiveRoleButton roleId={role.id} label={`${role.company} — ${role.title}`} />
+          )}
+          <DeleteRoleButton roleId={role.id} label={`${role.company} — ${role.title}`} />
+        </div>
       </div>
     </div>
   );

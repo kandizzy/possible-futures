@@ -60,7 +60,7 @@ describe('evaluatePosting', () => {
     const res = await evaluatePosting(makeFormData({ url: '', posting_text: 'We are looking for a design engineer...' }));
     expect(res.success).toBe(true);
     expect(mockFetch).not.toHaveBeenCalled();
-    expect(mockScore).toHaveBeenCalledWith('We are looking for a design engineer...');
+    expect(mockScore).toHaveBeenCalledWith('We are looking for a design engineer...', undefined, undefined, undefined);
   });
 
   it('fetches URL when no pasted text', async () => {

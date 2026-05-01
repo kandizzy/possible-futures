@@ -21,7 +21,9 @@ CREATE TABLE IF NOT EXISTS roles (
   date_applied TEXT,
   source TEXT NOT NULL DEFAULT 'manual',
   discovered_by_run_id INTEGER,
-  date_reviewed TEXT
+  date_reviewed TEXT,
+  archived INTEGER NOT NULL DEFAULT 0,
+  date_archived TEXT
 );
 
 CREATE TABLE IF NOT EXISTS applications (
@@ -32,10 +34,11 @@ CREATE TABLE IF NOT EXISTS applications (
   cover_letter_ai_draft TEXT,
   cover_letter_generated INTEGER DEFAULT 0,
   resume_summary_text TEXT,
+  resume_text TEXT,
   materials_notes TEXT,
   version_folder_path TEXT,
   date_applied TEXT,
-  current_status TEXT DEFAULT 'Submitted',
+  current_status TEXT DEFAULT 'Draft',
   next_steps TEXT,
   notes TEXT
 );

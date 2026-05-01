@@ -5,7 +5,9 @@ import {
   getRoleStatusCounts,
   getUnreviewedDiscoveredRoles,
   countUnreviewedDiscovered,
+  getArchivedRoleCount,
 } from '@/lib/queries/roles';
+import { getAllApplications } from '@/lib/queries/applications';
 import { getVersionLabelMap } from '@/lib/queries/source-files';
 import { isFirstRun } from '@/lib/queries/onboarding';
 import { getCompanyByName } from '@/lib/queries/companies';
@@ -54,10 +56,17 @@ export default async function DashboardPage({
 
   const statusCounts = getRoleStatusCounts();
   const totalRoles = Object.values(statusCounts).reduce((a, b) => a + b, 0);
-  const applied = statusCounts['Applied'] || 0;
-  const interviewing = statusCounts['Interviewing'] || 0;
-  const offers = statusCounts['Offer'] || 0;
+  // Submitted / Interviewing / Offers are derived from the applications table
+  // so the dashboard stays consistent with the Applications page. Drafts
+  // (current_status='Draft') are filtered out by getAllApplications.
+  const applications = getAllApplications();
+  const submittedCount = applications.filter((a) => a.current_status === 'Submitted').length;
+  const interviewingCount = applications.filter((a) =>
+    ['Phone Screen', 'Interview', 'Take Home'].includes(a.current_status),
+  ).length;
+  const offersCount = applications.filter((a) => a.current_status === 'Offer').length;
   const discoveredCount = countUnreviewedDiscovered();
+  const archivedCount = getArchivedRoleCount();
   const versionLabels = getVersionLabelMap();
   return (
     <div className="space-y-14">
@@ -98,13 +107,13 @@ export default async function DashboardPage({
         <div className="mt-8 md:mt-10 flex flex-wrap items-baseline gap-x-8 md:gap-x-10 gap-y-6 pt-6 border-t border-rule">
           <Stat label="Under consideration" value={totalRoles} />
           <Divider />
-          <Stat label="Submitted" value={applied} />
+          <Stat label="Submitted" value={submittedCount} />
           <Divider />
-          <Stat label="Interviewing" value={interviewing} accent={interviewing > 0} />
-          {offers > 0 && (
+          <Stat label="Interviewing" value={interviewingCount} accent={interviewingCount > 0} />
+          {offersCount > 0 && (
             <>
               <Divider />
-              <Stat label="Offers" value={offers} accent />
+              <Stat label="Offers" value={offersCount} accent />
             </>
           )}
         </div>
@@ -227,6 +236,17 @@ export default async function DashboardPage({
               ))}
             </ol>
           </>
+        )}
+        {archivedCount > 0 && (
+          <div className="mt-8 flex items-baseline justify-end">
+            <Link
+              href="/archive"
+              className="font-serif italic text-[13px] text-ink-3 hover:text-stamp transition-colors"
+              style={{ fontVariationSettings: '"opsz" 13, "SOFT" 40' }}
+            >
+              {archivedCount} archived · view archive →
+            </Link>
+          </div>
         )}
       </div>
     </div>

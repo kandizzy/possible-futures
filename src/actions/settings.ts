@@ -62,6 +62,133 @@ export async function getLocalSettings() {
   return getLocalConfig();
 }
 
+export interface BaseResumeFile {
+  letter: string;
+  label: string;
+  exists: boolean;
+  content: string;
+}
+
+export async function getBaseResumes(): Promise<BaseResumeFile[]> {
+  const labels = getResumeVersionLabels();
+  const versionsDir = path.join(process.cwd(), '..', 'versions');
+  const result: BaseResumeFile[] = [];
+  for (const [letter, label] of Object.entries(labels)) {
+    const filePath = path.join(versionsDir, `resume-${letter.toLowerCase()}.md`);
+    let content = '';
+    let exists = false;
+    try {
+      if (fs.existsSync(filePath)) {
+        content = fs.readFileSync(filePath, 'utf-8');
+        exists = true;
+      }
+    } catch {
+      /* swallow — surface as empty */
+    }
+    result.push({ letter, label, exists, content });
+  }
+  return result;
+}
+
+export async function saveBaseResume(formData: FormData): Promise<{ success: boolean; error?: string }> {
+  const letter = (formData.get('letter') as string | null)?.trim() ?? '';
+  const content = (formData.get('content') as string | null) ?? '';
+  if (!/^[A-Za-z]$/.test(letter)) {
+    return { success: false, error: 'Invalid version letter.' };
+  }
+  const labels = getResumeVersionLabels();
+  if (!labels[letter.toUpperCase()]) {
+    return { success: false, error: 'Unknown resume version.' };
+  }
+  const versionsDir = path.join(process.cwd(), '..', 'versions');
+  try {
+    if (!fs.existsSync(versionsDir)) {
+      fs.mkdirSync(versionsDir, { recursive: true });
+    }
+    const filePath = path.join(versionsDir, `resume-${letter.toLowerCase()}.md`);
+    fs.writeFileSync(filePath, content.endsWith('\n') ? content : content + '\n');
+    revalidatePath('/settings');
+    return { success: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return { success: false, error: `Failed to save: ${msg}` };
+  }
+}
+
+// Read/write the markdown content of a source file (Compass or Playbook).
+// PROJECT_BOOK is intentionally not editable through this surface — it's huge
+// and edits should go through the intake flow, not a free-form editor.
+const EDITABLE_SOURCE_FILES = new Set(['JOB_SEARCH_COMPASS.md', 'APPLICATION_PLAYBOOK.md']);
+
+export async function getSourceFileContent(filename: string): Promise<{ filename: string; content: string; exists: boolean } | null> {
+  if (!EDITABLE_SOURCE_FILES.has(filename)) return null;
+  const paths = await getSourceFilePaths();
+  const filepath = paths[filename];
+  if (!filepath) return null;
+  let content = '';
+  let exists = false;
+  try {
+    if (fs.existsSync(filepath)) {
+      content = fs.readFileSync(filepath, 'utf-8');
+      exists = true;
+    } else {
+      // Fall back to whatever's cached in the DB so the user can still edit + save
+      const cached = getSourceFile(filename);
+      if (cached) {
+        content = cached.content;
+      }
+    }
+  } catch {
+    /* swallow — return empty */
+  }
+  return { filename, content, exists };
+}
+
+export async function saveSourceFileContent(formData: FormData): Promise<{ success: boolean; error?: string }> {
+  const filename = (formData.get('filename') as string | null)?.trim() ?? '';
+  const content = (formData.get('content') as string | null) ?? '';
+  if (!EDITABLE_SOURCE_FILES.has(filename)) {
+    return { success: false, error: 'Unknown or non-editable source file.' };
+  }
+  const paths = await getSourceFilePaths();
+  const filepath = paths[filename];
+  if (!filepath) {
+    return { success: false, error: 'No path resolved for this file.' };
+  }
+  try {
+    const dir = path.dirname(filepath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    const final = content.endsWith('\n') ? content : content + '\n';
+    fs.writeFileSync(filepath, final);
+    // Mirror the new content into source_files so any AI call that reads from
+    // the DB cache (scoring, materials, discovery) sees the edit immediately.
+    upsertSourceFile(filename, final);
+    // If it's the Compass, re-parse signal/red-flag/floor too so the rubric
+    // stays in sync with the markdown.
+    if (filename === 'JOB_SEARCH_COMPASS.md') {
+      try {
+        const parsed = parseCompass(final);
+        upsertCompassConfig({
+          signal_words: parsed.signal_words,
+          red_flag_words: parsed.red_flag_words,
+          compensation_floor: parsed.compensation_floor,
+        });
+      } catch {
+        // Editing the Compass markdown without breaking the parser is the user's
+        // responsibility — surface no error here, the existing CompassEditor still
+        // shows whatever values are valid.
+      }
+    }
+    revalidatePath('/settings');
+    return { success: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return { success: false, error: `Failed to save: ${msg}` };
+  }
+}
+
 export async function fetchLocalModels(formData: FormData): Promise<{ success: boolean; models: string[]; error?: string }> {
   const baseUrl = ((formData.get('local_base_url') as string | null)?.trim() ?? '').replace(/\/$/, '');
   const apiKeyRaw = (formData.get('local_api_key') as string | null)?.trim() ?? '';

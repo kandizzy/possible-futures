@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { markdownToPdf } from '@/lib/pdf';
 import { getApplicationByRoleId } from '@/lib/queries/applications';
 import { getRoleById } from '@/lib/queries/roles';
+import { buildResumeFromBase } from '@/lib/resume-builder';
 
 function slugify(text: string): string {
   return text
@@ -35,7 +36,17 @@ export async function GET(request: NextRequest) {
   }
 
   if (type === 'resume' || type === 'all') {
-    const resume = app?.resume_summary_text;
+    // Prefer the full tailored resume body stored in the DB. For older rows
+    // where resume_text was never persisted (rows created before that column
+    // existed), rebuild on the fly from the base resume markdown + the saved
+    // tailored summary. Last resort: just emit the summary blurb so we never
+    // produce an empty PDF.
+    let resume = app?.resume_text || null;
+    if (!resume && app?.resume_summary_text && app?.resume_version_used) {
+      const built = buildResumeFromBase(app.resume_version_used, app.resume_summary_text);
+      if (built) resume = built;
+    }
+    if (!resume) resume = app?.resume_summary_text || null;
     if (resume) {
       if (sections.length > 0) sections.push('\n---\n');
       sections.push(resume);

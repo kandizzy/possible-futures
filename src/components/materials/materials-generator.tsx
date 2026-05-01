@@ -9,13 +9,22 @@ import {
 } from '@/actions/generate-materials';
 import { generateBaseResumesAction } from '@/actions/settings';
 import { Section, LoadingPanel } from '@/components/layout/editorial';
+import { MarkdownEditor } from '@/components/layout/markdown-editor';
+import { MarkSubmittedButton } from '@/components/roles/mark-submitted-button';
 import type { MaterialsResponse, MaterialsMode } from '@/lib/types';
 import Link from 'next/link';
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 export function MaterialsGenerator({
   roleId,
-  roleTitle: _roleTitle,
-  company: _company,
+  roleTitle,
+  company,
   versionLabels,
   materialsMode,
 }: {
@@ -40,6 +49,8 @@ export function MaterialsGenerator({
   const [aiDraftCoverLetter, setAiDraftCoverLetter] = useState('');
   const [aiDraftSummary, setAiDraftSummary] = useState('');
   const [editReason, setEditReason] = useState('');
+  const [appStatus, setAppStatus] = useState<string>('Draft');
+  const [appDateApplied, setAppDateApplied] = useState<string | null>(null);
 
   useEffect(() => {
     if (materialsMode === 'summary') {
@@ -51,7 +62,7 @@ export function MaterialsGenerator({
       if (saved) {
         setMaterials({
           cover_letter: saved.cover_letter,
-          resume: '',
+          resume: saved.resume,
           resume_summary: saved.resume_summary,
           resume_version: saved.resume_version as MaterialsResponse['resume_version'],
           version_rationale: '',
@@ -59,8 +70,11 @@ export function MaterialsGenerator({
           projects_to_compress: [],
         });
         setCoverLetter(saved.cover_letter);
+        setResume(saved.resume);
         setResumeSummary(saved.resume_summary);
         setSavedPath(saved.folder_path);
+        setAppStatus(saved.current_status);
+        setAppDateApplied(saved.date_applied);
         if (saved.cover_letter_ai_draft) {
           setAiDraftCoverLetter(saved.cover_letter_ai_draft);
         }
@@ -71,6 +85,14 @@ export function MaterialsGenerator({
   const hasEdits =
     (aiDraftCoverLetter && coverLetter.trim() !== aiDraftCoverLetter.trim()) ||
     (aiDraftSummary && resumeSummary.trim() !== aiDraftSummary.trim());
+
+  // Stale-materials check: materials were saved to a folder named after the
+  // company + title at generation time. If either has been edited since,
+  // the saved folder name no longer matches and the cover letter / summary
+  // may reference the old name.
+  const expectedFolderSlug = slugify(`${company}-${roleTitle}`);
+  const savedFolderSlug = savedPath ? savedPath.replace(/\/+$/, '').split('/').pop() ?? '' : '';
+  const isStale = Boolean(materials && savedPath && savedFolderSlug && savedFolderSlug !== expectedFolderSlug);
 
   function handleGenerateBaseResumes() {
     setGeneratingResumes(true);
@@ -217,6 +239,27 @@ export function MaterialsGenerator({
 
       {materials && (
         <>
+          {/* Stale materials notice — company or title changed since save */}
+          {isStale && !isPending && (
+            <div className="p-5 border border-stamp bg-stamp/5">
+              <div className="smallcaps text-[9px] text-stamp mb-2">Heads up</div>
+              <p
+                className="font-serif italic text-[14px] text-ink leading-snug"
+                style={{ fontVariationSettings: '"opsz" 14, "SOFT" 40' }}
+              >
+                The role&apos;s company or title has changed since these materials
+                were generated. The cover letter and summary may still reference the
+                old name. Regenerating will rewrite them and create a new folder
+                named for the current values.
+              </p>
+              <div className="mt-4">
+                <button onClick={handleGenerate} className="btn-stamp">
+                  Regenerate materials
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Version + rationale */}
           <Section label="Version">
             <div
@@ -246,14 +289,14 @@ export function MaterialsGenerator({
             />
           </Section>
 
-          {/* Resume (only in full mode) */}
+          {/* Resume — markdown with live preview */}
           {resume && (
             <Section label="Resume">
-              <textarea
+              <MarkdownEditor
                 value={resume}
-                onChange={(e) => setResume(e.target.value)}
-                rows={30}
-                className="field w-full font-mono text-[12px] leading-[1.55] resize-y"
+                onChange={setResume}
+                rows={28}
+                ariaLabel="Tailored resume"
               />
             </Section>
           )}
@@ -339,12 +382,20 @@ export function MaterialsGenerator({
               Regenerate
             </button>
             <a
-              href={`/api/pdf?role=${roleId}&type=all`}
+              href={`/api/pdf?role=${roleId}&type=cover-letter`}
               target="_blank"
               rel="noopener noreferrer"
               className="font-mono text-[11px] text-ink-2 hover:text-stamp transition-colors cursor-pointer underline decoration-rule hover:decoration-stamp"
             >
-              Download PDF
+              Cover letter PDF
+            </a>
+            <a
+              href={`/api/pdf?role=${roleId}&type=resume`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-[11px] text-ink-2 hover:text-stamp transition-colors cursor-pointer underline decoration-rule hover:decoration-stamp"
+            >
+              Resume PDF
             </a>
             {saveStatus && (
               <span
@@ -356,6 +407,18 @@ export function MaterialsGenerator({
                 {saveStatus}
               </span>
             )}
+          </div>
+
+          {/* Mark as submitted — surfaces the application-status flip right
+              where the user finishes the materials, instead of forcing them
+              back to the role detail page. */}
+          <div className="pt-6 border-t border-rule-soft">
+            <div className="smallcaps text-[9px] text-ink-3 mb-3">After you send it</div>
+            <MarkSubmittedButton
+              roleId={roleId}
+              isSubmitted={appStatus === 'Submitted'}
+              dateApplied={appDateApplied}
+            />
           </div>
         </>
       )}

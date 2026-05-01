@@ -44,9 +44,12 @@ export async function checkBaseResumes(): Promise<BaseResumeStatus> {
 export async function getSavedMaterials(roleId: number): Promise<{
   cover_letter: string;
   resume_summary: string;
+  resume: string;
   resume_version: string;
   folder_path: string;
   cover_letter_ai_draft: string;
+  current_status: string;
+  date_applied: string | null;
 } | null> {
   const app = getApplicationByRoleId(roleId);
   if (!app || !app.cover_letter_generated) return null;
@@ -54,9 +57,12 @@ export async function getSavedMaterials(roleId: number): Promise<{
   return {
     cover_letter: app.cover_letter_text || '',
     resume_summary: app.resume_summary_text || '',
+    resume: app.resume_text || '',
     resume_version: app.resume_version_used || '',
     folder_path: app.version_folder_path || '',
     cover_letter_ai_draft: app.cover_letter_ai_draft || '',
+    current_status: app.current_status,
+    date_applied: app.date_applied,
   };
 }
 
@@ -88,6 +94,7 @@ export async function generateMaterialsAction(roleId: number): Promise<Materials
     updateApplicationMaterials(appId, {
       cover_letter_text: materials.cover_letter,
       resume_summary_text: materials.resume_summary,
+      resume_text: materials.resume,
       resume_version_used: materials.resume_version,
       version_folder_path: savedPath,
       cover_letter_ai_draft: materials.cover_letter,
@@ -154,6 +161,7 @@ export async function exportMaterials(
   updateApplicationMaterials(appId, {
     cover_letter_text: coverLetter,
     resume_summary_text: resumeSummary,
+    resume_text: resume,
     resume_version_used: resumeVersion,
     version_folder_path: versionsDir,
   });

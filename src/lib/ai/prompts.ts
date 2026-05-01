@@ -26,7 +26,7 @@ When you identify skill or experience gaps between the person's background and t
 
 Only include gaps when they genuinely exist. For strong fits, return an empty array. Don't manufacture gaps.
 
-You must also extract these metadata fields from the posting and include them in the response: \`role_title\`, \`company\`, \`location\`, and \`salary_range\`. Look at the headline, sub-headline, "About [Company]" sections, footer, hiring URL, or any place where the company is named. The hiring company is the one whose ATS the posting lives on, not their clients or partners. Only return null for these fields if the posting genuinely contains no signal at all.
+You must also extract these metadata fields from the posting and include them in the response: \`role_title\`, \`company\`, \`location\`, and \`salary_range\`. Look at the headline, sub-headline, "About [Company]" sections, footer, the source URL (if provided), or any place where the company is named. URLs are often the strongest signal — \`boards.greenhouse.io/stripe/...\` means Stripe, \`jobs.lever.co/anthropic/...\` means Anthropic, \`careers.coinbase.com/...\` means Coinbase. Use the URL to disambiguate or recover company names that aren't in the posting body. The hiring company is the one whose ATS the posting lives on, not their clients or partners. Only return null for these fields if neither the posting body nor the URL contains any signal at all.
 
 Return ONLY valid JSON. Include every field in the schema.`;
 }
@@ -140,14 +140,15 @@ export function buildScoringStablePrefix(): string {
  * The volatile tail — just the posting to be evaluated, marked with its own
  * header so the model sees clear delineation from the stable prefix.
  */
-export function buildScoringVolatileSuffix(postingText: string): string {
-  return `\n=== JOB POSTING TO EVALUATE ===\n${postingText}`;
+export function buildScoringVolatileSuffix(postingText: string, url?: string | null): string {
+  const urlLine = url ? `\nSource URL: ${url}\n` : '';
+  return `\n=== JOB POSTING TO EVALUATE ===${urlLine}\n${postingText}`;
 }
 
 /**
  * Backwards-compatible concatenation — used by the CLI path (which can't
  * benefit from prompt caching).
  */
-export function buildScoringUserPrompt(postingText: string): string {
-  return buildScoringStablePrefix() + buildScoringVolatileSuffix(postingText);
+export function buildScoringUserPrompt(postingText: string, url?: string | null): string {
+  return buildScoringStablePrefix() + buildScoringVolatileSuffix(postingText, url);
 }

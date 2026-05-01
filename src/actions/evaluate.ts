@@ -42,7 +42,7 @@ export async function evaluatePosting(formData: FormData): Promise<EvaluateResul
 
   // Score with AI
   try {
-    const scoring = await scorePosting(postingText);
+    const scoring = await scorePosting(postingText, undefined, undefined, url || undefined);
 
     // Save to database
     const roleId = insertRole({

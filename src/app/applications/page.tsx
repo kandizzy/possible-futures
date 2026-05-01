@@ -1,12 +1,13 @@
 import { getAllApplications } from '@/lib/queries/applications';
-import { getAllRoles } from '@/lib/queries/roles';
 import { ApplicationsList } from '@/components/applications/applications-list';
 import { PageHeader, LedgerStat, LedgerDivider } from '@/components/layout/editorial';
 
+const INTERVIEW_STATUSES = new Set(['Phone Screen', 'Interview', 'Take Home']);
+
 export default function ApplicationsPage() {
   const applications = getAllApplications();
-  const appliedRoles = getAllRoles('Applied');
-  const interviewingRoles = getAllRoles('Interviewing');
+  const submittedCount = applications.filter((a) => a.current_status === 'Submitted').length;
+  const interviewingCount = applications.filter((a) => INTERVIEW_STATUSES.has(a.current_status)).length;
 
   return (
     <div className="space-y-14">
@@ -20,9 +21,9 @@ export default function ApplicationsPage() {
       <div className="flex items-baseline gap-10 pt-6 border-t border-rule rise" style={{ animationDelay: '60ms' }}>
         <LedgerStat label="In the post" value={applications.length} />
         <LedgerDivider />
-        <LedgerStat label="Submitted" value={appliedRoles.length} />
+        <LedgerStat label="Submitted" value={submittedCount} />
         <LedgerDivider />
-        <LedgerStat label="Interviewing" value={interviewingRoles.length} accent={interviewingRoles.length > 0} />
+        <LedgerStat label="Interviewing" value={interviewingCount} accent={interviewingCount > 0} />
       </div>
 
       <div className="rise" style={{ animationDelay: '140ms' }}>

@@ -15,6 +15,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/calibrations', label: 'Calibrations', numeral: 'VII' },
   { href: '/settings', label: 'Settings', numeral: 'VIII' },
   { href: '/ledger', label: 'Ledger', numeral: 'IX' },
+  { href: '/archive', label: 'Archive', numeral: 'X' },
 ];
 
 export function Sidebar({ userName, revisionCount = 0 }: { userName: string; revisionCount?: number }) {

@@ -67,6 +67,12 @@ function migrate(db: Database.Database): void {
   if (!rolesColNames.has('gap_analysis')) {
     db.exec("ALTER TABLE roles ADD COLUMN gap_analysis TEXT");
   }
+  if (!rolesColNames.has('archived')) {
+    db.exec("ALTER TABLE roles ADD COLUMN archived INTEGER NOT NULL DEFAULT 0");
+  }
+  if (!rolesColNames.has('date_archived')) {
+    db.exec("ALTER TABLE roles ADD COLUMN date_archived TEXT");
+  }
 
   // Migration: add materials_calibrations table
   const matCalTable = db.prepare(
@@ -90,6 +96,38 @@ function migrate(db: Database.Database): void {
   if (!appColNames.has('cover_letter_ai_draft')) {
     db.exec("ALTER TABLE applications ADD COLUMN cover_letter_ai_draft TEXT");
   }
+  if (!appColNames.has('resume_text')) {
+    db.exec("ALTER TABLE applications ADD COLUMN resume_text TEXT");
+  }
+
+  // Backfill: any application row that has current_status='Submitted' but
+  // no date_applied was almost certainly auto-created by the materials draft
+  // flow (which used to default to 'Submitted'). Reset those to 'Draft' so
+  // the Applications page reflects what was actually sent.
+  db.exec(
+    "UPDATE applications SET current_status = 'Draft' WHERE current_status = 'Submitted' AND date_applied IS NULL"
+  );
+
+  // Backfill: roles whose status moved into the application lifecycle (Applied
+  // / Interviewing / Offer / Rejected / Withdrawn) but whose application row
+  // is still 'Draft' — happens when the user changed role status via the
+  // StatusSelect before the role→app sync existed. Mirror the role status
+  // onto the app row so the Applications page reflects reality.
+  db.exec(`
+    UPDATE applications
+    SET current_status = CASE r.status
+      WHEN 'Applied' THEN 'Submitted'
+      WHEN 'Interviewing' THEN 'Interview'
+      WHEN 'Offer' THEN 'Offer'
+      WHEN 'Rejected' THEN 'Rejected'
+      WHEN 'Withdrawn' THEN 'Withdrawn'
+    END,
+    date_applied = COALESCE(applications.date_applied, date('now'))
+    FROM roles r
+    WHERE applications.role_id = r.id
+      AND applications.current_status = 'Draft'
+      AND r.status IN ('Applied', 'Interviewing', 'Offer', 'Rejected', 'Withdrawn')
+  `);
 
   // Migration: add onboarding_draft and onboarding_state tables
   const draftTable = db.prepare(

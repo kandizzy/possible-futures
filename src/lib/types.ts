@@ -75,6 +75,8 @@ export interface Role {
   source: RoleSource;
   discovered_by_run_id: number | null;
   date_reviewed: string | null;
+  archived: boolean;
+  date_archived: string | null;
 }
 
 export interface Application {
@@ -85,6 +87,7 @@ export interface Application {
   cover_letter_ai_draft: string | null;
   cover_letter_generated: boolean;
   resume_summary_text: string | null;
+  resume_text: string | null;
   materials_notes: string | null;
   version_folder_path: string | null;
   date_applied: string | null;

@@ -19,7 +19,7 @@ export interface OrchestratorDeps {
     slug: string,
     company: string,
   ) => Promise<DiscoveredPosting[]>;
-  scorePosting?: (text: string) => Promise<Awaited<ReturnType<typeof scorePosting>>>;
+  scorePosting?: (text: string, url?: string | null) => Promise<Awaited<ReturnType<typeof scorePosting>>>;
   now?: () => string;
 }
 
@@ -44,7 +44,7 @@ export async function runRoleDiscovery(
       const adapter = getAdapter(provider);
       return adapter.fetchPostings(slug, company);
     });
-  const scoreFn = deps.scorePosting || scorePosting;
+  const scoreFn = deps.scorePosting || ((text, url) => scorePosting(text, undefined, undefined, url));
   const now = deps.now || (() => new Date().toISOString());
 
   const companies = getCompanies();
@@ -102,7 +102,7 @@ export async function runRoleDiscovery(
 
       for (const posting of newPostings) {
         try {
-          const scoring = await scoreFn(posting.posting_text);
+          const scoring = await scoreFn(posting.posting_text, posting.url);
 
           insertRole({
             title: posting.title || scoring.role_title || 'Untitled',

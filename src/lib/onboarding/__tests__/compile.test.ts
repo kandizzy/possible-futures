@@ -206,7 +206,7 @@ describe('compileIntake — empty and partial inputs', () => {
   it('falls back to default Resume Rules when intake has none', () => {
     const { book, playbook } = compileIntake({});
     const rules = extractRules(book, playbook);
-    expect(rules).toContain('Two pages max');
+    expect(rules).toContain('Two pages is the default');
     expect(rules).toContain('Three paragraphs max');
   });
 

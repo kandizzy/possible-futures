@@ -91,6 +91,38 @@ export async function updateStatus(formData: FormData): Promise<{ success: boole
   if (!VALID_STATUSES.has(status)) return { success: false, error: 'Invalid status.' };
 
   updateRoleStatus(roleId, status as RoleStatus);
+
+  // Keep the application row in sync. The Applications page (and the dashboard
+  // submitted/interviewing/offers stats) reads from applications.current_status,
+  // so if the role's status flips into the application lifecycle, the
+  // application row needs to flip too. Without this, marking a role "Applied"
+  // via the StatusSelect leaves the application stuck in 'Draft' and invisible.
+  const ROLE_TO_APP_STATUS: Record<string, string | null> = {
+    Applied: 'Submitted',
+    Interviewing: 'Interview',
+    Offer: 'Offer',
+    Rejected: 'Rejected',
+    Withdrawn: 'Withdrawn',
+    // 'New', 'Ghosted', 'Skipped' don't have a clean application-side mapping —
+    // leave the app row alone for those.
+  };
+  const newAppStatus = ROLE_TO_APP_STATUS[status];
+  if (newAppStatus) {
+    const { upsertApplicationForRole } = await import('@/lib/queries/applications');
+    const { getDb } = await import('@/lib/db');
+    const appId = upsertApplicationForRole(roleId);
+    const db = getDb();
+    const today = new Date().toISOString().split('T')[0];
+    // Stamp date_applied only when the app moves out of Draft for the first time.
+    db.prepare(
+      `UPDATE applications
+       SET current_status = ?,
+           date_applied = COALESCE(date_applied, ?)
+       WHERE id = ?`,
+    ).run(newAppStatus, today, appId);
+    revalidatePath('/applications');
+  }
+
   revalidatePath('/');
   revalidatePath(`/roles/${roleId}`);
   return { success: true };

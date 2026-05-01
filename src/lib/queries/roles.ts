@@ -33,6 +33,8 @@ function deserializeRole(row: RoleRow & Partial<{
   source: string | null;
   discovered_by_run_id: number | null;
   date_reviewed: string | null;
+  archived: number | null;
+  date_archived: string | null;
 }>): Role {
   return {
     ...row,
@@ -48,32 +50,46 @@ function deserializeRole(row: RoleRow & Partial<{
     source: (row.source as RoleSource) || 'manual',
     discovered_by_run_id: row.discovered_by_run_id ?? null,
     date_reviewed: row.date_reviewed ?? null,
+    archived: Boolean(row.archived),
+    date_archived: row.date_archived ?? null,
   };
 }
 
 export function getAllRoles(status?: string): Role[] {
   const db = getDb();
   if (status && status !== 'All') {
-    const rows = db.prepare('SELECT * FROM roles WHERE status = ? ORDER BY date_added DESC').all(status) as RoleRow[];
+    const rows = db.prepare('SELECT * FROM roles WHERE status = ? AND archived = 0 ORDER BY date_added DESC').all(status) as RoleRow[];
     return rows.map(deserializeRole);
   }
-  const rows = db.prepare('SELECT * FROM roles ORDER BY date_added DESC').all() as RoleRow[];
+  const rows = db.prepare('SELECT * FROM roles WHERE archived = 0 ORDER BY date_added DESC').all() as RoleRow[];
   return rows.map(deserializeRole);
+}
+
+export function getArchivedRoles(): Role[] {
+  const db = getDb();
+  const rows = db.prepare('SELECT * FROM roles WHERE archived = 1 ORDER BY date_archived DESC, date_added DESC').all() as RoleRow[];
+  return rows.map(deserializeRole);
+}
+
+export function getArchivedRoleCount(): number {
+  const db = getDb();
+  const row = db.prepare('SELECT COUNT(*) as c FROM roles WHERE archived = 1').get() as { c: number };
+  return row.c;
 }
 
 export function getRolesByCompany(companyName: string, status?: string): Role[] {
   const db = getDb();
   if (status && status !== 'All') {
-    const rows = db.prepare('SELECT * FROM roles WHERE company = ? AND status = ? ORDER BY date_added DESC').all(companyName, status) as RoleRow[];
+    const rows = db.prepare('SELECT * FROM roles WHERE company = ? AND status = ? AND archived = 0 ORDER BY date_added DESC').all(companyName, status) as RoleRow[];
     return rows.map(deserializeRole);
   }
-  const rows = db.prepare('SELECT * FROM roles WHERE company = ? ORDER BY date_added DESC').all(companyName) as RoleRow[];
+  const rows = db.prepare('SELECT * FROM roles WHERE company = ? AND archived = 0 ORDER BY date_added DESC').all(companyName) as RoleRow[];
   return rows.map(deserializeRole);
 }
 
 export function getRoleStatusCounts(): Record<string, number> {
   const db = getDb();
-  const rows = db.prepare('SELECT status, COUNT(*) as count FROM roles GROUP BY status').all() as Array<{ status: string; count: number }>;
+  const rows = db.prepare('SELECT status, COUNT(*) as count FROM roles WHERE archived = 0 GROUP BY status').all() as Array<{ status: string; count: number }>;
   const counts: Record<string, number> = {};
   for (const row of rows) {
     counts[row.status] = row.count;
@@ -244,4 +260,14 @@ export function updateRoleMetadata(id: number, patch: RoleMetadataPatch): void {
 export function deleteRole(id: number): void {
   const db = getDb();
   db.prepare('DELETE FROM roles WHERE id = ?').run(id);
+}
+
+export function archiveRole(id: number): void {
+  const db = getDb();
+  db.prepare("UPDATE roles SET archived = 1, date_archived = datetime('now') WHERE id = ?").run(id);
+}
+
+export function unarchiveRole(id: number): void {
+  const db = getDb();
+  db.prepare('UPDATE roles SET archived = 0, date_archived = NULL WHERE id = ?').run(id);
 }
