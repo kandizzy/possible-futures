@@ -115,14 +115,16 @@ export function SuggestionCard({
       ) : (
         /* Actions */
         <div className="flex items-center gap-3 pt-1">
-          <button
-            type="button"
-            onClick={handleTrack}
-            disabled={isPending || !suggestion.verified}
-            className="btn-stamp disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            {isPending ? 'Loading…' : 'Track →'}
-          </button>
+          {suggestion.verified && (
+            <button
+              type="button"
+              onClick={handleTrack}
+              disabled={isPending}
+              className="btn-stamp disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              {isPending ? 'Loading…' : 'See roles →'}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleSkip}

@@ -296,4 +296,34 @@ function migrate(db: Database.Database): void {
   if (oldBible) {
     db.exec("UPDATE source_files SET filename = 'PROJECT_BOOK' WHERE filename = 'PROJECT_BIBLE'");
   }
+
+  // Migration: meta table for app/schema version tracking and dismissable
+  // flags. Existing DBs predate the table; create it idempotently and seed
+  // data_schema_version=1 for any DB that was running before v0.2.0.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.prepare(
+    "INSERT OR IGNORE INTO meta (key, value) VALUES ('data_schema_version', '1')",
+  ).run();
+
+  // Stamp the running app version on every boot so the meta table always
+  // reflects what's actually executing. Useful for the "what's new" banner
+  // and for debugging "which version was this DB last touched by."
+  try {
+    const pkgPath = path.join(process.cwd(), 'package.json');
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) as { version?: string };
+    if (pkg.version) {
+      db.prepare(
+        `INSERT INTO meta (key, value, updated_at) VALUES ('app_version', ?, datetime('now'))
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`,
+      ).run(pkg.version);
+    }
+  } catch {
+    // package.json unreadable — skip silently; the rest of the app keeps working.
+  }
 }

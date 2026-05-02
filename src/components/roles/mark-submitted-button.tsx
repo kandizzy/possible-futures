@@ -14,6 +14,12 @@ export function MarkSubmittedButton({
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
+  // Track submitted/date locally so the button reflects success immediately.
+  // The parent (materials page) loads its own status state once on mount and
+  // doesn't refetch when this server action returns, so without local state
+  // the button would flip back to "Mark as submitted" after the action.
+  const [localSubmitted, setLocalSubmitted] = useState(isSubmitted);
+  const [localDate, setLocalDate] = useState<string | null>(dateApplied ?? null);
 
   function handle(action: 'submit' | 'revert') {
     setError('');
@@ -23,18 +29,28 @@ export function MarkSubmittedButton({
       const result = action === 'submit'
         ? await markApplicationSubmitted(fd)
         : await unmarkApplicationSubmitted(fd);
-      if (!result.success) setError(result.error ?? 'Could not update.');
+      if (result.success) {
+        if (action === 'submit') {
+          setLocalSubmitted(true);
+          setLocalDate(new Date().toISOString().split('T')[0]);
+        } else {
+          setLocalSubmitted(false);
+          setLocalDate(null);
+        }
+      } else {
+        setError(result.error ?? 'Could not update.');
+      }
     });
   }
 
-  if (isSubmitted) {
+  if (localSubmitted) {
     return (
       <div className="flex flex-col items-center gap-1">
         <span
           className="font-serif italic text-[12px] text-ink-2"
           style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
         >
-          Submitted{dateApplied ? ` on ${dateApplied}` : ''}
+          Submitted{localDate ? ` on ${localDate}` : ''}
         </span>
         <button
           type="button"

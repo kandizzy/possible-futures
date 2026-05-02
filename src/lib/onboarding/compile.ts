@@ -238,19 +238,37 @@ function compileCompass(a: IntakeAnswers): string {
   out.push(a.dream_role || '_(not yet written)_');
   out.push('');
 
-  // Role tiers
+  // Three Horizons (Bill Sharpe / IFF, applied to a career). H3 is the
+  // destination role/identity; H2 is bridge work that builds the H3 case;
+  // H1 is sustaining work that keeps the search funded while H3 develops.
+  // Underlying JSON keys stay dream/strong/acceptable for back-compat with
+  // any existing intake answers.
   if (a.role_tiers) {
-    out.push('## Role Tiers');
+    out.push('## Three Horizons');
     out.push('');
-    out.push('### Tier 1 — Dream');
+    out.push('_What to let go of, what to conserve, and how I reach a viable future._');
+    out.push('');
+    out.push('### H3 — Viable future');
+    out.push('_My dream role. The future I\'m aiming for, the person I am meant to be._');
+    out.push('');
     for (const r of a.role_tiers.dream || []) out.push(`- ${r}`);
     if ((a.role_tiers.dream || []).length === 0) out.push('_(none)_');
     out.push('');
-    out.push('### Tier 2 — Strong Fit');
+    out.push('### H2 — Seeds of innovation');
+    out.push('_Bridges and footholds — disruptive work that grows toward H3._');
+    out.push('');
     for (const r of a.role_tiers.strong || []) out.push(`- ${r}`);
     if ((a.role_tiers.strong || []).length === 0) out.push('_(none)_');
+    if (a.bridge_rationale && a.bridge_rationale.trim()) {
+      out.push('');
+      out.push('**What these seeds grow:**');
+      out.push('');
+      out.push(a.bridge_rationale.trim());
+    }
     out.push('');
-    out.push('### Tier 3 — Acceptable');
+    out.push('### H1 — Losing fit');
+    out.push('_The day-to-day that is losing its spark. What to let go of, and what\'s worth conserving._');
+    out.push('');
     for (const r of a.role_tiers.acceptable || []) out.push(`- ${r}`);
     if ((a.role_tiers.acceptable || []).length === 0) out.push('_(none)_');
     out.push('');

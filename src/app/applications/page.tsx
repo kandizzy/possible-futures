@@ -1,4 +1,5 @@
-import { getAllApplications } from '@/lib/queries/applications';
+import Link from 'next/link';
+import { getAllApplications, getArchivedApplicationCount } from '@/lib/queries/applications';
 import { ApplicationsList } from '@/components/applications/applications-list';
 import { PageHeader, LedgerStat, LedgerDivider } from '@/components/layout/editorial';
 
@@ -8,6 +9,7 @@ export default function ApplicationsPage() {
   const applications = getAllApplications();
   const submittedCount = applications.filter((a) => a.current_status === 'Submitted').length;
   const interviewingCount = applications.filter((a) => INTERVIEW_STATUSES.has(a.current_status)).length;
+  const archivedCount = getArchivedApplicationCount();
 
   return (
     <div className="space-y-14">
@@ -25,6 +27,19 @@ export default function ApplicationsPage() {
         <LedgerDivider />
         <LedgerStat label="Interviewing" value={interviewingCount} accent={interviewingCount > 0} />
       </div>
+
+      {archivedCount > 0 && (
+        <p
+          className="font-serif italic text-[13px] text-ink-3 -mt-8 rise"
+          style={{ animationDelay: '90ms', fontVariationSettings: '"opsz" 13, "SOFT" 40' }}
+        >
+          {archivedCount} {archivedCount === 1 ? 'application' : 'applications'} hidden in the{' '}
+          <Link href="/archive" className="underline decoration-rule hover:decoration-stamp hover:text-stamp transition-colors">
+            archive
+          </Link>
+          .
+        </p>
+      )}
 
       <div className="rise" style={{ animationDelay: '140ms' }}>
         <ApplicationsList applications={applications} />

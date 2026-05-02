@@ -154,12 +154,12 @@ select {
   cursor: pointer;
   transition: all 0.12s ease;
 }
-.btn-stamp:hover {
+.btn-stamp:not(:disabled):hover {
   background: var(--stamp-deep);
   transform: translate(-1px, -1px);
   box-shadow: 3px 3px 0 var(--ink);
 }
-.btn-stamp:active {
+.btn-stamp:not(:disabled):active {
   transform: translate(1px, 1px);
   box-shadow: 0 0 0 var(--ink);
 }
@@ -179,7 +179,7 @@ select {
   cursor: pointer;
   transition: all 0.12s ease;
 }
-.btn-ghost:hover {
+.btn-ghost:not(:disabled):hover {
   background: var(--ink);
   color: var(--paper);
 }

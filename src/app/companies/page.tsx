@@ -3,6 +3,7 @@ import { getCompaniesWithPipeline } from '@/lib/queries/companies';
 import { PageHeader, EmptyState } from '@/components/layout/editorial';
 import { CompanyCard } from '@/components/companies/company-card';
 import { WatchlistRow } from '@/components/companies/watchlist-row';
+import { AddCompanyButton } from '@/components/companies/add-company-button';
 
 function urgencySort(a: { interviewing_count: number; offer_count: number; applied_count: number; name: string }, b: typeof a): number {
   const aUrgent = a.interviewing_count + a.offer_count;
@@ -37,9 +38,12 @@ export default function CompaniesPage() {
         tail="houses."
         subtitle={`${all.length} ${all.length === 1 ? 'house' : 'houses'}${active.length > 0 ? `, ${active.length} with active pipeline` : ''}.`}
         action={
-          <Link href="/discover" className="btn-stamp">
-            Discover more →
-          </Link>
+          <div className="flex items-center gap-3">
+            <AddCompanyButton />
+            <Link href="/discover" className="btn-stamp">
+              Discover more →
+            </Link>
+          </div>
         }
       />
 

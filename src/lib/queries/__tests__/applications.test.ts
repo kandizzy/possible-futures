@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getAllApplications,
   getApplicationByRoleId,
+  getArchivedApplicationCount,
   insertApplication,
   updateApplicationStatus,
   updateApplicationNotes,
@@ -57,6 +58,43 @@ describe('getAllApplications', () => {
 
   it('returns empty array when no applications', () => {
     expect(getAllApplications()).toEqual([]);
+  });
+
+  it('excludes applications whose role is archived', async () => {
+    const { archiveRole } = await import('@/lib/queries/roles');
+    const liveRoleId = insertRole({ title: 'Live', company: 'A', ai_scores: makeAiScores(), ai_recommendation: 'apply' });
+    const archivedRoleId = insertRole({ title: 'Archived', company: 'B', ai_scores: makeAiScores(), ai_recommendation: 'apply' });
+    insertApplication({ role_id: liveRoleId, current_status: 'Submitted' });
+    insertApplication({ role_id: archivedRoleId, current_status: 'Submitted' });
+    archiveRole(archivedRoleId);
+
+    const apps = getAllApplications();
+    expect(apps).toHaveLength(1);
+    expect(apps[0].role_title).toBe('Live');
+  });
+});
+
+describe('getArchivedApplicationCount', () => {
+  it('returns 0 when nothing is archived', () => {
+    const roleId = insertTestRole();
+    insertApplication({ role_id: roleId, current_status: 'Submitted' });
+    expect(getArchivedApplicationCount()).toBe(0);
+  });
+
+  it('counts non-Draft applications whose role is archived', async () => {
+    const { archiveRole } = await import('@/lib/queries/roles');
+    const r1 = insertRole({ title: 'A', company: 'X', ai_scores: makeAiScores(), ai_recommendation: 'apply' });
+    const r2 = insertRole({ title: 'B', company: 'Y', ai_scores: makeAiScores(), ai_recommendation: 'apply' });
+    const r3 = insertRole({ title: 'C', company: 'Z', ai_scores: makeAiScores(), ai_recommendation: 'apply' });
+    insertApplication({ role_id: r1, current_status: 'Submitted' });
+    insertApplication({ role_id: r2, current_status: 'Rejected' });
+    insertApplication({ role_id: r3, current_status: 'Draft' });
+    archiveRole(r1);
+    archiveRole(r2);
+    archiveRole(r3);
+
+    // Drafts are excluded even when their role is archived.
+    expect(getArchivedApplicationCount()).toBe(2);
   });
 });
 

@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { detectCompanyAts, setAtsForCompany } from '@/actions/discovery';
+import { getAtsBoardUrl } from '@/lib/ats/board-url';
 import type { AtsProvider } from '@/lib/types';
 
 const PROVIDERS: AtsProvider[] = ['greenhouse', 'lever', 'ashby', 'workable'];
@@ -123,21 +124,30 @@ export function AtsIndicator({
 
   if (atsProvider && atsSlug) {
     return (
-      <button
-        type="button"
-        onClick={() => setEditing(true)}
-        className="group inline-flex items-baseline gap-2 font-mono tabular text-[10px] text-ink-2 hover:text-stamp transition-colors"
-        title="Click to edit"
-      >
-        <span className="text-ink-3">{atsProvider}</span>
-        <span>·</span>
-        <span>{atsSlug}</span>
+      <div className="inline-flex items-baseline gap-3 font-mono tabular text-[10px]">
+        <a
+          href={getAtsBoardUrl(atsProvider, atsSlug)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-baseline gap-1 text-ink-2 hover:text-stamp transition-colors underline decoration-rule hover:decoration-stamp"
+          title={`Open ${atsProvider}/${atsSlug}`}
+        >
+          <span className="text-ink-3 no-underline">{atsProvider}</span>
+          <span>·</span>
+          <span>{atsSlug}</span>
+        </a>
         {lastScannedAt && (
-          <span className="text-ink-3 italic">
-            · last {lastScannedAt.slice(0, 10)}
-          </span>
+          <span className="text-ink-3 italic">last {lastScannedAt.slice(0, 10)}</span>
         )}
-      </button>
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="text-ink-3 hover:text-stamp transition-colors italic"
+          title="Edit ATS"
+        >
+          edit
+        </button>
+      </div>
     );
   }
 

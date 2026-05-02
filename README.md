@@ -1,6 +1,6 @@
 # Possible Futures
 
-_A local-first tool for evaluating job postings against a career compass you control. A humane counterweight to the AI that screens you out._
+_A local-first tool for evaluating job postings against a career compass you control. A futures tool for your own path._
 
 AI is used on both sides of the hiring process now. It reads your resume, ranks you, and decides whether a human ever sees your application. This tool puts equivalent machinery on your side of the table. You describe who you are and what you want in your own words. Possible Futures reads every posting against that description and tells you which roles are actually worth your attention, and how to frame yourself for each one without hollowing out your voice.
 

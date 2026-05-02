@@ -2,6 +2,7 @@
 
 import { ChapterShell } from '../chapter-shell';
 import { ChipPicker } from '../chip-picker';
+import { ThreeHorizonsChart } from '../three-horizons-chart';
 import {
   SUGGESTED_SIGNAL_WORDS,
   SUGGESTED_COMPANIES_BY_CATEGORY,
@@ -57,35 +58,64 @@ export function Chapter3LookingFor({
               />
             </section>
 
-            {/* Role tiers */}
+            {/* Three Horizons (Bill Sharpe) — applied to a career */}
             <section>
-              <div className="smallcaps text-[9px] text-ink-3 mb-3">Role tiers</div>
+              <div className="smallcaps text-[9px] text-ink-3 mb-3">Three Horizons</div>
               <p
-                className="font-serif italic text-[14px] text-ink-2 mb-4 max-w-xl"
+                className="font-serif italic text-[14px] text-ink-2 mb-5 max-w-xl"
                 style={{ fontVariationSettings: '"opsz" 14, "SOFT" 40' }}
               >
-                Three tiers of role titles that would make you open the posting. Dream goes
-                first, then strong fits, then acceptable fallbacks.
+                A foresight frame for career growth. H1 is the work that&apos;s losing
+                its fit — but parts of it are worth conserving. H2 is where you plant
+                seeds of innovation: bridges and footholds. H3 is the viable future those
+                footholds grow into.
               </p>
+              <div className="mb-6">
+                <ThreeHorizonsChart />
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <TierColumn
-                  label="Dream"
+                  label="H3 · Viable future"
+                  caption="My dream role. The future I'm aiming for, the person I am meant to be."
                   values={tiers.dream}
                   suggestions={SUGGESTED_ROLE_TIERS.dream}
                   accent="stamp"
                   onChange={(next) => update({ role_tiers: { ...tiers, dream: next } })}
                 />
                 <TierColumn
-                  label="Strong fit"
+                  label="H2 · Seeds of innovation"
+                  caption="Bridges and footholds. Disruptive work that grows toward H3."
                   values={tiers.strong}
                   suggestions={SUGGESTED_ROLE_TIERS.strong}
                   onChange={(next) => update({ role_tiers: { ...tiers, strong: next } })}
                 />
                 <TierColumn
-                  label="Acceptable"
+                  label="H1 · Losing fit"
+                  caption="The day-to-day that is losing its spark. What to let go of, and what's worth conserving."
                   values={tiers.acceptable}
                   suggestions={SUGGESTED_ROLE_TIERS.acceptable}
                   onChange={(next) => update({ role_tiers: { ...tiers, acceptable: next } })}
+                />
+              </div>
+              <div className="mt-6 max-w-2xl">
+                <div className="smallcaps text-[9px] text-ink-3 mb-2">
+                  What these seeds grow
+                </div>
+                <p
+                  className="font-serif italic text-[13px] text-ink-2 mb-3"
+                  style={{ fontVariationSettings: '"opsz" 13, "SOFT" 40' }}
+                >
+                  What does each H2 role plant — what foothold, skill, exposure, or
+                  relationship grows from it toward H3? The scoring AI uses this to flag
+                  postings that fit the foothold story, not just the destination.
+                </p>
+                <textarea
+                  value={answers.bridge_rationale || ''}
+                  onChange={(e) => update({ bridge_rationale: e.target.value })}
+                  rows={4}
+                  placeholder="e.g. These roles get me cross-functional reps and a portfolio of shipped product surfaces — the two things I'm consistently asked about in Staff Design Engineer screens."
+                  className="field w-full font-serif text-[14px] leading-snug resize-y"
+                  style={{ fontVariationSettings: '"opsz" 14, "SOFT" 30' }}
                 />
               </div>
             </section>
@@ -193,12 +223,14 @@ export function Chapter3LookingFor({
 
 function TierColumn({
   label,
+  caption,
   values,
   suggestions,
   onChange,
   accent = 'ink',
 }: {
   label: string;
+  caption?: string;
   values: string[];
   suggestions: string[];
   onChange: (next: string[]) => void;
@@ -206,7 +238,19 @@ function TierColumn({
 }) {
   return (
     <div className="border-t border-rule pt-4">
-      <div className="smallcaps text-[9px] text-ink-3 mb-3">{label}</div>
+      <h3
+        className={`font-sans font-bold text-[15px] mb-1 ${accent === 'stamp' ? 'text-stamp' : 'text-ink'}`}
+      >
+        {label}
+      </h3>
+      {caption && (
+        <p
+          className="font-serif italic text-[12px] text-ink-3 mb-3 leading-snug"
+          style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
+        >
+          {caption}
+        </p>
+      )}
       <ChipPicker
         value={values}
         onChange={onChange}

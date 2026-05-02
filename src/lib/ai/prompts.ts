@@ -18,6 +18,10 @@ Read the person's career book and Application Playbook carefully for context abo
 Also recommend which resume version to use. The available versions are defined in the Application Playbook's Role-Type Emphasis Guide:
 ${versionLines || '- Version A\n- Version B\n- Version C\n- Version D'}
 
+The Compass groups roles into Three Horizons (a foresight frame for a career in transition). H3 is the viable future — the role they're growing into. H2 is the seeds of innovation — disruptive bridge work where they're planting footholds that grow toward H3. H1 is the work that's losing its fit — the present paradigm, declining; some of it is worth conserving and carrying forward, the rest is what they're letting go. The Compass may include a "What these seeds grow" paragraph explaining what each H2 role plants — the foothold, skill, exposure, or relationship it grows toward H3.
+
+When you write the \`fit_summary\`, take a position on horizon: is this posting an H3 (a real shot at the viable future), a strong H2 (a seed of innovation — it plants something concrete that grows toward H3, name what), an H1 (a piece of the declining paradigm, possibly worth conserving for what it carries forward), or off-path? A modest-paying or unsexy posting can still be a strong recommendation if it's genuinely a foothold toward H3. A flashy posting that doesn't grow anything forward can be a skip even if scores look fine. Use the H2 seeds rationale (when present) as your guide for what counts as load-bearing.
+
 When you identify skill or experience gaps between the person's background and the role requirements, provide a gap analysis with concrete project suggestions. For each gap:
 - Describe what's missing
 - Explain why it matters for this specific role

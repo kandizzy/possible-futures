@@ -122,6 +122,54 @@ describe('compileIntake — Compass contract', () => {
     // Compensation floor defaults to 0 when no value set
     expect(parsed.compensation_floor).toBe(0);
   });
+
+  it('compiles a Three Horizons section with H3/H2/H1 sub-headers', () => {
+    const { compass } = compileIntake(sampleAnswers());
+    expect(compass).toContain('## Three Horizons');
+    expect(compass).toContain('### H3 — Viable future');
+    expect(compass).toContain('### H2 — Seeds of innovation');
+    expect(compass).toContain('### H1 — Losing fit');
+  });
+
+  it('places dream/strong/acceptable lists under their H3/H2/H1 horizons', () => {
+    const { compass } = compileIntake(sampleAnswers());
+    const h3Start = compass.indexOf('### H3 — Viable future');
+    const h2Start = compass.indexOf('### H2 — Seeds of innovation');
+    const h1Start = compass.indexOf('### H1 — Losing fit');
+    expect(h3Start).toBeGreaterThan(0);
+    expect(h2Start).toBeGreaterThan(h3Start);
+    expect(h1Start).toBeGreaterThan(h2Start);
+
+    const h3Block = compass.slice(h3Start, h2Start);
+    const h2Block = compass.slice(h2Start, h1Start);
+    const h1Block = compass.slice(h1Start);
+
+    expect(h3Block).toContain('Staff Design Engineer');
+    expect(h2Block).toContain('Senior Front-End');
+    expect(h1Block).toContain('Interaction Designer');
+  });
+
+  it('includes bridge_rationale under the H2 section when present', () => {
+    const { compass } = compileIntake(
+      sampleAnswers({
+        bridge_rationale:
+          'These roles get me cross-functional reps that make me legible as a Staff Design Engineer.',
+      }),
+    );
+    expect(compass).toContain('**What these seeds grow:**');
+    expect(compass).toContain('cross-functional reps');
+    // Rationale must land between H2 and H1, not after H1.
+    const h2Start = compass.indexOf('### H2 — Seeds of innovation');
+    const h1Start = compass.indexOf('### H1 — Losing fit');
+    const rationaleAt = compass.indexOf('**What these seeds grow:**');
+    expect(rationaleAt).toBeGreaterThan(h2Start);
+    expect(rationaleAt).toBeLessThan(h1Start);
+  });
+
+  it('omits the bridge_rationale line when not provided', () => {
+    const { compass } = compileIntake(sampleAnswers());
+    expect(compass).not.toContain('**What these seeds grow:**');
+  });
 });
 
 describe('compileIntake — Book contract', () => {

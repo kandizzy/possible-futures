@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getAtsBoardUrl } from '@/lib/ats/board-url';
 import type { CompanyWithPipeline } from '@/lib/types';
 
 const STATUS_DISPLAY: { key: keyof CompanyWithPipeline; label: string; color: string }[] = [
@@ -72,9 +73,15 @@ export function CompanyCard({ company }: { company: CompanyWithPipeline }) {
       {/* Footer: ATS + careers */}
       <div className="flex items-baseline justify-between gap-3 pt-1">
         {company.ats_provider && company.ats_slug ? (
-          <span className="font-mono text-[10px] text-ink-3">
+          <a
+            href={getAtsBoardUrl(company.ats_provider, company.ats_slug)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-[10px] text-ink-3 hover:text-stamp transition-colors underline decoration-rule hover:decoration-stamp"
+            title={`Open ${company.ats_provider}/${company.ats_slug}`}
+          >
             {company.ats_provider}/{company.ats_slug}
-          </span>
+          </a>
         ) : (
           <span className="font-mono text-[10px] text-ink-3 italic">no ATS</span>
         )}

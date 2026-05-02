@@ -205,3 +205,16 @@ CREATE TABLE IF NOT EXISTS discovery_postings_cache (
   salary TEXT,
   posting_text TEXT
 );
+
+-- Generic key/value table for app-level metadata: schema version, current app
+-- version, dismissable banner flags, anything that doesn't deserve its own
+-- table. Read via getMeta() / setMeta() in src/lib/queries/meta.ts.
+CREATE TABLE IF NOT EXISTS meta (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Baseline schema version. Bumped manually each time we add a numbered
+-- migration. v0.2.0 ships at version 1.
+INSERT OR IGNORE INTO meta (key, value) VALUES ('data_schema_version', '1');

@@ -4,15 +4,35 @@ import type { Application, ResumeVersion } from '../types';
 export function getAllApplications(): (Application & { role_title: string; role_company: string })[] {
   const db = getDb();
   // Drafts (rows auto-created when generating materials but never submitted)
-  // don't belong on the Applications list. Filter them out at the query layer
-  // so every consumer sees only real applications.
+  // don't belong on the Applications list. Archived roles' applications also
+  // shouldn't show — archiving a role takes its application out of the active
+  // ledger but the row stays in the DB so the user can unarchive later.
   return db.prepare(`
     SELECT a.*, r.title as role_title, r.company as role_company
     FROM applications a
     JOIN roles r ON r.id = a.role_id
     WHERE a.current_status != 'Draft'
+      AND r.archived = 0
     ORDER BY a.date_applied DESC NULLS LAST
   `).all() as (Application & { role_title: string; role_company: string })[];
+}
+
+/**
+ * How many real (non-Draft) applications are hidden because their role is
+ * archived. Used to surface a "X archived → view archive" hint on the
+ * Applications page so users aren't confused when something they remember
+ * sending isn't in the active list.
+ */
+export function getArchivedApplicationCount(): number {
+  const db = getDb();
+  const row = db.prepare(`
+    SELECT COUNT(*) as c
+    FROM applications a
+    JOIN roles r ON r.id = a.role_id
+    WHERE a.current_status != 'Draft'
+      AND r.archived = 1
+  `).get() as { c: number };
+  return row.c;
 }
 
 export function getApplicationByRoleId(roleId: number): Application | null {

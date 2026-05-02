@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { discoverCompanies, type SuggestedCompany } from '@/lib/ai/discover-companies';
+import { groundSuggestionRationales } from '@/lib/ai/ground-suggestions';
 import { verifyAts } from '@/lib/discovery/verify-ats';
 import {
   insertCompany,
@@ -75,13 +76,67 @@ export async function suggestCompaniesAction(formData: FormData): Promise<Sugges
     }),
   );
 
+  // Ground each verified suggestion's why_fits in actual posting text. The
+  // first Claude call writes a why_fits from prior knowledge, which can
+  // confabulate (Moment Factory described as "museum installations" when the
+  // current postings are about live events). This second call rewrites
+  // why_fits using the postings we just fetched as the source of truth, and
+  // returns null for candidates whose postings don't actually match the
+  // compass — those are dropped before display.
+  const groundingCandidates = verified
+    .filter((v) => v.verified && v.postings.length > 0)
+    .map((v) => ({
+      name: v.name,
+      postings: v.postings.map((p) => ({ title: p.title, text: p.posting_text || '' })),
+    }));
+
+  let groundedByName = new Map<string, string | null>();
+  let groundingCost = 0;
+  if (groundingCandidates.length > 0) {
+    try {
+      const grounded = await groundSuggestionRationales(groundingCandidates);
+      groundingCost = grounded.cost;
+      for (const r of grounded.results) {
+        groundedByName.set(r.name.trim().toLowerCase(), r.why_fits);
+      }
+    } catch (err) {
+      console.warn('[discover] grounding step failed, falling back to first-call rationale:', err);
+      // On failure, fall back: every verified candidate keeps its first-call
+      // why_fits. Better than dropping the whole batch.
+      for (const v of verified) groundedByName.set(v.name.trim().toLowerCase(), v.why_fits);
+    }
+  }
+
+  // Build the final list. Three buckets:
+  // 1. Verified + has postings + grounding returned a rationale → keep with
+  //    grounded rationale (the real, defensible "why this fits").
+  // 2. Verified + no postings, OR grounding said "no fit" → drop entirely;
+  //    we can't defend this suggestion against the compass.
+  // 3. Unverified → keep, but strip the first-call rationale because that
+  //    text was never grounded against real company copy. The user still
+  //    sees the candidate name + category as a lead to check manually.
+  const persisted = verified
+    .map((v) => {
+      if (v.verified) {
+        const grounded = groundedByName.get(v.name.trim().toLowerCase());
+        return { ...v, why_fits: grounded ?? null };
+      }
+      // Unverified: keep the candidate but drop the (potentially confabulated)
+      // rationale. Empty string suppresses the description block in the UI.
+      return { ...v, why_fits: '' };
+    })
+    .filter((v) => {
+      if (v.verified) return typeof v.why_fits === 'string' && v.why_fits.length > 0;
+      return true; // unverified always pass; they have empty why_fits
+    });
+
   // Persist the entire batch to the database
   insertSuggestionBatch(
     batchId,
-    verified.map((v) => ({
+    persisted.map((v) => ({
       name: v.name,
       category: v.category,
-      why_fits: v.why_fits,
+      why_fits: v.why_fits || '',
       careers_url: v.careers_url,
       verified: v.verified,
       verified_provider: v.verified_provider,
@@ -96,7 +151,7 @@ export async function suggestCompaniesAction(formData: FormData): Promise<Sugges
       })),
     })),
     model,
-    cost,
+    cost + groundingCost,
     roleType,
   );
 
@@ -119,7 +174,7 @@ export async function suggestCompaniesAction(formData: FormData): Promise<Sugges
   }));
 
   revalidatePath('/discover');
-  return { ok: true, suggestions: clientResults, cost_usd: cost, model };
+  return { ok: true, suggestions: clientResults, cost_usd: cost + groundingCost, model };
 }
 
 // Step 1: Preview which postings match the compass before committing

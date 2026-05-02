@@ -245,6 +245,10 @@ export interface IntakeAnswers {
   // Chapter 3 — What You're Looking For
   dream_role?: string;
   role_tiers?: IntakeRoleTiers;
+  // Three Horizons framing: a free-form note explaining what the H2 (bridge)
+  // roles are meant to build toward H3 (destination). Surfaced in the Compass
+  // and used by the scoring prompt to flag bridge-fit on postings.
+  bridge_rationale?: string;
   target_companies?: string[];
   signal_words?: string[];
   compensation_floor?: number;
