@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from './nav-items';
+import { GearIcon } from './gear-icon';
 
 export function Sidebar({ userName, revisionCount = 0 }: { userName: string; revisionCount?: number }) {
   const pathname = usePathname();
@@ -10,8 +11,8 @@ export function Sidebar({ userName, revisionCount = 0 }: { userName: string; rev
   return (
     <aside className="shrink-0 border-r border-rule hidden md:flex flex-col bg-paper md:w-72">
       {/* Masthead */}
-      <div className="px-5 sm:px-8 md:px-10 pt-6 md:pt-12 pb-5 md:pb-10 md:border-b md:border-rule flex items-start justify-between md:block gap-4">
-        <div>
+      <div className="px-5 sm:px-8 md:px-10 pt-6 md:pt-12 pb-5 md:pb-10 md:border-b md:border-rule flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <div className="smallcaps text-[9px] text-ink-3 mb-2 md:mb-3">A Working Index</div>
           <div
             className="font-serif text-[32px] md:text-[42px] leading-[0.88] text-ink tracking-tight"
@@ -48,6 +49,7 @@ export function Sidebar({ userName, revisionCount = 0 }: { userName: string; rev
             </span>
           </div>
         </div>
+        <GearIcon className="shrink-0 mt-1" />
       </div>
 
       {/* Nav — catalog TOC on desktop, horizontal strip on mobile */}

@@ -1,4 +1,5 @@
 import { AtsIndicator } from '@/components/discovery/ats-indicator';
+import { EditCompanyButton } from './edit-company-button';
 import type { CompanyWithPipeline } from '@/lib/types';
 
 export function WatchlistRow({ company }: { company: CompanyWithPipeline }) {
@@ -34,6 +35,13 @@ export function WatchlistRow({ company }: { company: CompanyWithPipeline }) {
           )}
         </div>
         <div className="flex items-baseline gap-4 shrink-0">
+          <EditCompanyButton
+            companyId={company.id}
+            name={company.name}
+            category={company.category}
+            why_interested={company.why_interested}
+            careers_url={company.careers_url}
+          />
           {company.careers_url && (
             <a
               href={company.careers_url}

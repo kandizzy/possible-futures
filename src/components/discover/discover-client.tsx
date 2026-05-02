@@ -8,6 +8,7 @@ import {
   type VerifiedSuggestion,
 } from '@/actions/discover';
 import { PRICING, formatUsd, estimateCost } from '@/lib/ai/pricing';
+import { LoadingPanel } from '@/components/layout/editorial';
 import { SuggestionCard } from './suggestion-card';
 import { ManualAddForm } from './manual-add-form';
 
@@ -162,8 +163,19 @@ export function DiscoverClient({
         )}
       </section>
 
+      {/* Loading — Discover runs three phases: candidate generation,
+          parallel ATS verification, then a grounding pass to filter
+          confabulated rationales. The whole thing can take a minute or
+          two, especially via CLI or local model. */}
+      {isSuggesting && (
+        <LoadingPanel
+          message="Reading your compass for company candidates"
+          caption="Generating candidates · verifying ATS · grounding rationales — typically 30–60s via Anthropic API, longer via CLI or local model"
+        />
+      )}
+
       {/* Error state */}
-      {error && (
+      {error && !isSuggesting && (
         <div className="border-l-2 border-stamp pl-4 py-2">
           <p
             className="font-serif italic text-[14px] text-stamp"

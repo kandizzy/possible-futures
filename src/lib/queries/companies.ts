@@ -81,6 +81,28 @@ export function getSkippedCompanyNames(): string[] {
   return rows.map((r) => r.name);
 }
 
+/**
+ * Full company rows for the "Skipped" section on /companies — lets the user
+ * see what they dismissed and restore any of them. Drafts (no name + skipped)
+ * shouldn't normally exist but are filtered out defensively.
+ */
+export function getSkippedCompanies(): Company[] {
+  const db = getDb();
+  const rows = db
+    .prepare(`
+      SELECT * FROM companies
+      WHERE skipped_at IS NOT NULL AND name != ''
+      ORDER BY skipped_at DESC
+    `)
+    .all() as Company[];
+  return rows;
+}
+
+export function unskipCompany(id: number): void {
+  const db = getDb();
+  db.prepare('UPDATE companies SET skipped_at = NULL WHERE id = ?').run(id);
+}
+
 export function getTrackedCompanyNames(): string[] {
   const db = getDb();
   const rows = db

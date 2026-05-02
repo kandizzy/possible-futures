@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getAtsBoardUrl } from '@/lib/ats/board-url';
+import { EditCompanyButton } from './edit-company-button';
 import type { CompanyWithPipeline } from '@/lib/types';
 
 const STATUS_DISPLAY: { key: keyof CompanyWithPipeline; label: string; color: string }[] = [
@@ -70,7 +71,7 @@ export function CompanyCard({ company }: { company: CompanyWithPipeline }) {
         </span>
       </div>
 
-      {/* Footer: ATS + careers */}
+      {/* Footer: ATS + careers + edit */}
       <div className="flex items-baseline justify-between gap-3 pt-1">
         {company.ats_provider && company.ats_slug ? (
           <a
@@ -85,17 +86,26 @@ export function CompanyCard({ company }: { company: CompanyWithPipeline }) {
         ) : (
           <span className="font-mono text-[10px] text-ink-3 italic">no ATS</span>
         )}
-        {company.careers_url && (
-          <a
-            href={company.careers_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-serif italic text-[13px] text-ink hover:text-stamp transition-colors"
-            style={{ fontVariationSettings: '"opsz" 13, "SOFT" 60' }}
-          >
-            careers →
-          </a>
-        )}
+        <div className="flex items-baseline gap-3">
+          <EditCompanyButton
+            companyId={company.id}
+            name={company.name}
+            category={company.category}
+            why_interested={company.why_interested}
+            careers_url={company.careers_url}
+          />
+          {company.careers_url && (
+            <a
+              href={company.careers_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-serif italic text-[13px] text-ink hover:text-stamp transition-colors"
+              style={{ fontVariationSettings: '"opsz" 13, "SOFT" 60' }}
+            >
+              careers →
+            </a>
+          )}
+        </div>
       </div>
     </article>
   );

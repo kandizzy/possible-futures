@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from './nav-items';
+import { GearIcon } from './gear-icon';
 
 export function MobileNav({
   userName,
@@ -59,18 +60,21 @@ export function MobileNav({
             Futures.
           </span>
         </Link>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          aria-label="Open navigation"
-          className="-mr-2 p-2 text-ink hover:text-stamp transition-colors"
-        >
-          <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true">
-            <line x1="0" y1="1" x2="22" y2="1" stroke="currentColor" strokeWidth="1.5" />
-            <line x1="0" y1="7" x2="22" y2="7" stroke="currentColor" strokeWidth="1.5" />
-            <line x1="0" y1="13" x2="22" y2="13" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-3">
+          <GearIcon />
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-label="Open navigation"
+            className="-mr-2 p-2 text-ink hover:text-stamp transition-colors"
+          >
+            <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true">
+              <line x1="0" y1="1" x2="22" y2="1" stroke="currentColor" strokeWidth="1.5" />
+              <line x1="0" y1="7" x2="22" y2="7" stroke="currentColor" strokeWidth="1.5" />
+              <line x1="0" y1="13" x2="22" y2="13" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+          </button>
+        </div>
       </header>
 
       {/* Drawer — slides in from the right via CSS animation when [open] */}

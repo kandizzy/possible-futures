@@ -1,9 +1,10 @@
 import Link from 'next/link';
-import { getCompaniesWithPipeline } from '@/lib/queries/companies';
+import { getCompaniesWithPipeline, getSkippedCompanies } from '@/lib/queries/companies';
 import { PageHeader, EmptyState } from '@/components/layout/editorial';
 import { CompanyCard } from '@/components/companies/company-card';
 import { WatchlistRow } from '@/components/companies/watchlist-row';
 import { AddCompanyButton } from '@/components/companies/add-company-button';
+import { SkippedSection } from '@/components/companies/skipped-section';
 
 function urgencySort(a: { interviewing_count: number; offer_count: number; applied_count: number; name: string }, b: typeof a): number {
   const aUrgent = a.interviewing_count + a.offer_count;
@@ -15,6 +16,7 @@ function urgencySort(a: { interviewing_count: number; offer_count: number; appli
 
 export default function CompaniesPage() {
   const all = getCompaniesWithPipeline();
+  const skipped = getSkippedCompanies();
 
   const active = all.filter((c) => c.role_count > 0).sort(urgencySort);
   const watchlist = all.filter((c) => c.role_count === 0);
@@ -125,6 +127,9 @@ export default function CompaniesPage() {
               </details>
             </section>
           )}
+
+          {/* Skipped — companies dismissed during Discover, with restore */}
+          <SkippedSection companies={skipped} />
         </div>
       )}
     </div>
