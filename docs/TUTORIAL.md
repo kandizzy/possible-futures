@@ -142,7 +142,7 @@ Every API call, its cost, and what it was for. The Federation doesn't use money,
 
 ## 24. Settings
 
-Tune your compass, choose your AI model, and manage signal words.
+Tune your compass, choose your AI backend (Anthropic API, Claude Code, or a local LM Studio / Ollama model), and manage signal words.
 
 ![Settings](screenshots/24-settings.png)
 
