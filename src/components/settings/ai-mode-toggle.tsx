@@ -8,6 +8,7 @@ import {
   checkApiKeyExists,
 } from '@/actions/settings';
 import { Panel } from '@/components/layout/editorial';
+import { Select } from '@/components/layout/select';
 import type { AiMode } from '@/lib/types';
 
 interface LocalConfig {
@@ -198,18 +199,14 @@ function LocalConfigForm({ initial }: { initial: LocalConfig }) {
       </Field>
       <Field label="Model" hint="The model identifier loaded in your server. Use Fetch models to list what's available.">
         {discoveredModels && discoveredModels.length > 0 ? (
-          <select
+          <Select
             value={model}
-            onChange={(e) => setModel(e.target.value)}
-            className="field font-mono text-[12px] w-full"
-          >
-            <option value="">— select a model —</option>
-            {discoveredModels.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setModel(v)}
+            className="font-mono text-[12px]"
+            fullWidth
+            placeholder="— select a model —"
+            options={discoveredModels.map((m) => ({ value: m, label: m }))}
+          />
         ) : (
           <input
             type="text"

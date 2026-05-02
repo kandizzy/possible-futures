@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from './nav-items';
-import { GearIcon } from './gear-icon';
+import { GearIconSvg, BookIconSvg } from './icons';
 
 export function MobileNav({
   userName,
@@ -60,21 +60,18 @@ export function MobileNav({
             Futures.
           </span>
         </Link>
-        <div className="flex items-center gap-3">
-          <GearIcon />
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            aria-label="Open navigation"
-            className="-mr-2 p-2 text-ink hover:text-stamp transition-colors"
-          >
-            <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true">
-              <line x1="0" y1="1" x2="22" y2="1" stroke="currentColor" strokeWidth="1.5" />
-              <line x1="0" y1="7" x2="22" y2="7" stroke="currentColor" strokeWidth="1.5" />
-              <line x1="0" y1="13" x2="22" y2="13" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Open navigation"
+          className="-mr-2 p-2 text-ink hover:text-stamp transition-colors"
+        >
+          <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true">
+            <line x1="0" y1="1" x2="22" y2="1" stroke="currentColor" strokeWidth="1.5" />
+            <line x1="0" y1="7" x2="22" y2="7" stroke="currentColor" strokeWidth="1.5" />
+            <line x1="0" y1="13" x2="22" y2="13" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+        </button>
       </header>
 
       {/* Drawer — slides in from the right via CSS animation when [open] */}
@@ -180,6 +177,42 @@ export function MobileNav({
                 );
               })}
             </ul>
+
+            {/* Foundational actions — Revise + Settings, separate from numbered chapters */}
+            <div className="mt-7 pt-5 border-t border-rule-soft flex flex-col gap-3">
+              <Link
+                href="/onboarding/1"
+                className={`group flex items-center gap-3 transition-colors ${
+                  pathname.startsWith('/onboarding')
+                    ? 'text-stamp'
+                    : 'text-ink-2 hover:text-stamp'
+                }`}
+              >
+                <BookIconSvg size={16} className="shrink-0" />
+                <span
+                  className="font-serif italic text-[19px] leading-none"
+                  style={{ fontVariationSettings: '"opsz" 14, "SOFT" 50' }}
+                >
+                  Revise
+                </span>
+              </Link>
+              <Link
+                href="/settings"
+                className={`group flex items-center gap-3 transition-colors ${
+                  pathname.startsWith('/settings')
+                    ? 'text-stamp'
+                    : 'text-ink-2 hover:text-stamp'
+                }`}
+              >
+                <GearIconSvg size={16} className="shrink-0" />
+                <span
+                  className="font-serif italic text-[19px] leading-none"
+                  style={{ fontVariationSettings: '"opsz" 14, "SOFT" 50' }}
+                >
+                  Settings
+                </span>
+              </Link>
+            </div>
           </nav>
         </div>
       </dialog>

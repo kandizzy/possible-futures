@@ -138,6 +138,132 @@ select {
   font-style: italic;
 }
 
+/* Custom <Select> dropdown — fully popover-based so the open menu matches the
+   editorial aesthetic instead of the OS picker. The trigger button is styled
+   like an input; the popover is paper-square with ink-bordered options. */
+
+/* Trigger — field variant: paper bg + border + chevron, like an input */
+.select-trigger-field {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: color-mix(in oklab, var(--paper) 78%, var(--ink) 6%);
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  padding: 0.5rem 0.75rem;
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  transition: border-color 0.15s ease;
+  outline: none;
+}
+.select-trigger-field:hover:not(:disabled) {
+  border-color: var(--ink-2);
+}
+.select-trigger-field:focus-visible {
+  border-color: var(--ink);
+}
+.select-trigger-field .select-trigger-chevron {
+  color: var(--ink-3);
+  flex-shrink: 0;
+}
+
+/* Trigger — inline variant: transparent, just text + chevron. Lets parent
+   control color/font (e.g. colored italic for status pickers). */
+.select-trigger-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-family: inherit;
+  text-align: left;
+  outline: none;
+  color: inherit;
+}
+.select-trigger-inline .select-trigger-chevron {
+  color: currentColor;
+  opacity: 0.55;
+  flex-shrink: 0;
+  transition: opacity 0.12s ease;
+}
+.select-trigger-inline:hover .select-trigger-chevron,
+.select-trigger-inline:focus-visible .select-trigger-chevron {
+  opacity: 1;
+}
+
+.select-trigger-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Popover — opens below by default, flips up via .select-popover-up when
+   there isn't room. */
+.select-popover {
+  position: absolute;
+  z-index: 50;
+  left: 0;
+  top: calc(100% + 4px);
+  min-width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 0.25rem 0;
+  margin: 0;
+  list-style: none;
+  font-family: var(--font-sans);
+  animation: select-popover-fade 90ms ease-out;
+}
+.select-popover-up {
+  top: auto;
+  bottom: calc(100% + 4px);
+  box-shadow: 3px -3px 0 var(--ink);
+}
+@keyframes select-popover-fade {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.select-option {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background 80ms ease;
+}
+.select-option-highlighted {
+  background: var(--paper-2);
+}
+.select-option-selected {
+  color: var(--stamp);
+  font-style: italic;
+}
+.select-option-selected.select-option-highlighted {
+  background: var(--paper-3);
+}
+.select-option-disabled {
+  color: var(--ink-3);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.select-option-prefix {
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
 .btn-stamp {
   display: inline-flex;
   align-items: center;

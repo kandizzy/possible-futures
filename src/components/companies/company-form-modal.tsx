@@ -90,16 +90,19 @@ export function CompanyFormModal(props: Props) {
         setError(result.error ?? 'Could not auto-fill.');
         return;
       }
-      // Write directly to inputs since we use uncontrolled defaultValue.
-      if (categoryRef.current && result.result.category) {
-        categoryRef.current.value = result.result.category;
-      }
-      if (whyRef.current && result.result.why_interested) {
-        whyRef.current.value = result.result.why_interested;
-      }
-      if (careersRef.current && result.result.careers_url) {
-        careersRef.current.value = result.result.careers_url;
-      }
+      // Only fill empty fields. Important in edit mode so Claude doesn't
+      // overwrite curated notes; in add mode the inputs are usually empty so
+      // the rule is equivalent. To re-fill a field, clear it first.
+      const fillIfEmpty = (
+        ref: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>,
+        value: string | null,
+      ) => {
+        if (!ref.current || !value) return;
+        if (ref.current.value.trim() === '') ref.current.value = value;
+      };
+      fillIfEmpty(categoryRef, result.result.category);
+      fillIfEmpty(whyRef, result.result.why_interested);
+      fillIfEmpty(careersRef, result.result.careers_url);
       setAutofilled(true);
     });
   }
@@ -129,8 +132,8 @@ export function CompanyFormModal(props: Props) {
   const pendingLabel = mode === 'add' ? 'Adding…' : 'Saving…';
   const subtitle =
     mode === 'add'
-      ? 'No AI tokens, no Discover run. The company lands in your Watchlist with whatever you know about it.'
-      : 'Fix typos or update your notes. Name is locked because existing roles reference it.';
+      ? 'Fill in what you know — or hit Auto-fill → to let Claude take a first pass at category, why interested, and careers URL.'
+      : 'Update your notes, or hit Auto-fill → to let Claude top up any empty fields. Name is locked because existing roles reference it.';
 
   return (
     <dialog
@@ -165,18 +168,20 @@ export function CompanyFormModal(props: Props) {
               <label htmlFor="company-name" className="smallcaps text-[9px] text-ink-3">
                 Name {mode === 'add' && <span className="text-stamp">*</span>}
               </label>
-              {mode === 'add' && (
-                <button
-                  type="button"
-                  onClick={handleAutofill}
-                  disabled={isPending || isAutofilling}
-                  className="font-serif italic text-[12px] text-ink-2 hover:text-stamp transition-colors disabled:opacity-50"
-                  style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
-                  title="Use AI to fill in details"
-                >
-                  {isAutofilling ? 'Auto-filling…' : 'Auto-fill →'}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={handleAutofill}
+                disabled={isPending || isAutofilling}
+                className="font-serif italic text-[12px] text-ink-2 hover:text-stamp transition-colors disabled:opacity-50"
+                style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
+                title={
+                  mode === 'edit'
+                    ? 'Use AI to fill in any empty fields'
+                    : 'Use AI to fill in details'
+                }
+              >
+                {isAutofilling ? 'Auto-filling…' : 'Auto-fill →'}
+              </button>
             </div>
             <input
               ref={nameRef}

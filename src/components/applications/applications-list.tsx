@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Application } from '@/lib/types';
 import { EmptyState } from '@/components/layout/editorial';
+import { Select } from '@/components/layout/select';
 
 const STATUSES = ['Submitted', 'Phone Screen', 'Interview', 'Take Home', 'Offer', 'Rejected', 'Withdrawn'];
 
@@ -36,8 +37,7 @@ function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  function handleStatusChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const newStatus = e.target.value;
+  function handleStatusChange(newStatus: string) {
     startTransition(async () => {
       const formData = new FormData();
       formData.set('app_id', String(app.id));
@@ -82,25 +82,16 @@ function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
           {app.date_applied || '—'}
         </div>
 
-        <select
+        <Select
+          variant="inline"
           value={app.current_status}
           onChange={handleStatusChange}
           disabled={isPending}
           aria-label={`Status for ${app.role_title} at ${app.role_company}`}
-          className={`
-            font-serif text-[14px] cursor-pointer pr-4 text-right
-            hover:text-stamp transition-colors disabled:opacity-50
-            min-w-[8rem]
-            ${getAppStatusStyle(app.current_status)}
-          `}
+          className={`font-serif text-[14px] text-right hover:text-stamp transition-colors min-w-[8rem] ${getAppStatusStyle(app.current_status)}`}
           style={{ fontVariationSettings: '"opsz" 14, "SOFT" 50' }}
-        >
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s.toLowerCase()}
-            </option>
-          ))}
-        </select>
+          options={STATUSES.map((s) => ({ value: s, label: s.toLowerCase() }))}
+        />
       </div>
 
       {/* Mobile stacked */}
@@ -109,24 +100,16 @@ function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
           <span className="font-mono tabular text-[9px] text-ink-3">
             {String(index).padStart(2, '0')}
           </span>
-          <select
+          <Select
+            variant="inline"
             value={app.current_status}
             onChange={handleStatusChange}
             disabled={isPending}
             aria-label={`Status for ${app.role_title}`}
-            className={`
-              font-serif text-[13px] cursor-pointer pr-4 text-right
-              hover:text-stamp transition-colors disabled:opacity-50
-              ${getAppStatusStyle(app.current_status)}
-            `}
+            className={`font-serif text-[13px] text-right hover:text-stamp transition-colors ${getAppStatusStyle(app.current_status)}`}
             style={{ fontVariationSettings: '"opsz" 13, "SOFT" 50' }}
-          >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s.toLowerCase()}
-              </option>
-            ))}
-          </select>
+            options={STATUSES.map((s) => ({ value: s, label: s.toLowerCase() }))}
+          />
         </div>
         <Link href={`/roles/${app.role_id}`} className="block group">
           <div

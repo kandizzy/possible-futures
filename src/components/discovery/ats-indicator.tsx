@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { detectCompanyAts, setAtsForCompany } from '@/actions/discovery';
 import { getAtsBoardUrl } from '@/lib/ats/board-url';
+import { Select } from '@/components/layout/select';
 import type { AtsProvider } from '@/lib/types';
 
 const PROVIDERS: AtsProvider[] = ['greenhouse', 'lever', 'ashby', 'workable'];
@@ -74,19 +75,15 @@ export function AtsIndicator({
   if (editing) {
     return (
       <form action={handleSave} className="flex flex-wrap items-baseline gap-2">
-        <select
+        <Select
           name="provider"
           defaultValue={atsProvider || ''}
-          className="field font-serif italic text-[12px]"
+          className="font-serif italic text-[12px]"
           style={{ fontVariationSettings: '"opsz" 12, "SOFT" 50' }}
-        >
-          <option value="">none</option>
-          {PROVIDERS.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
+          allowEmpty
+          emptyLabel="none"
+          options={PROVIDERS.map((p) => ({ value: p, label: p }))}
+        />
         <input
           type="text"
           name="slug"

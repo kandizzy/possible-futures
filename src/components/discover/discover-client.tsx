@@ -9,8 +9,8 @@ import {
 } from '@/actions/discover';
 import { PRICING, formatUsd, estimateCost } from '@/lib/ai/pricing';
 import { LoadingPanel } from '@/components/layout/editorial';
+import { CompanyFormModal } from '@/components/companies/company-form-modal';
 import { SuggestionCard } from './suggestion-card';
-import { ManualAddForm } from './manual-add-form';
 
 const DEFAULT_INPUT_EST = 8000;
 const DEFAULT_OUTPUT_EST = 3000;
@@ -257,24 +257,23 @@ export function DiscoverClient({
         </section>
       )}
 
-      {/* Manual add fallback */}
+      {/* Manual add fallback — opens the same modal used on /companies. */}
       <section className="pt-6 border-t border-rule">
-        {manualOpen ? (
-          <ManualAddForm
-            onCancel={() => setManualOpen(false)}
-            onSaved={() => setManualOpen(false)}
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={() => setManualOpen(true)}
-            className="font-serif italic text-[14px] text-ink-2 hover:text-stamp transition-colors"
-            style={{ fontVariationSettings: '"opsz" 14, "SOFT" 40' }}
-          >
-            Company not in the list? Add it yourself →
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => setManualOpen(true)}
+          className="font-serif italic text-[14px] text-ink-2 hover:text-stamp transition-colors"
+          style={{ fontVariationSettings: '"opsz" 14, "SOFT" 40' }}
+        >
+          Company not in the list? Add it yourself →
+        </button>
       </section>
+
+      <CompanyFormModal
+        mode="add"
+        open={manualOpen}
+        onClose={() => setManualOpen(false)}
+      />
     </div>
   );
 }

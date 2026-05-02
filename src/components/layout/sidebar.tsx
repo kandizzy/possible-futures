@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from './nav-items';
-import { GearIcon } from './gear-icon';
+import { GearIconSvg, BookIconSvg } from './icons';
 
 export function Sidebar({ userName, revisionCount = 0 }: { userName: string; revisionCount?: number }) {
   const pathname = usePathname();
@@ -11,8 +11,8 @@ export function Sidebar({ userName, revisionCount = 0 }: { userName: string; rev
   return (
     <aside className="shrink-0 border-r border-rule hidden md:flex flex-col bg-paper md:w-72">
       {/* Masthead */}
-      <div className="px-5 sm:px-8 md:px-10 pt-6 md:pt-12 pb-5 md:pb-10 md:border-b md:border-rule flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
+      <div className="px-5 sm:px-8 md:px-10 pt-6 md:pt-12 pb-5 md:pb-10 md:border-b md:border-rule flex items-start justify-between md:block gap-4">
+        <div>
           <div className="smallcaps text-[9px] text-ink-3 mb-2 md:mb-3">A Working Index</div>
           <div
             className="font-serif text-[32px] md:text-[42px] leading-[0.88] text-ink tracking-tight"
@@ -49,7 +49,6 @@ export function Sidebar({ userName, revisionCount = 0 }: { userName: string; rev
             </span>
           </div>
         </div>
-        <GearIcon className="shrink-0 mt-1" />
       </div>
 
       {/* Nav — catalog TOC on desktop, horizontal strip on mobile */}
@@ -102,20 +101,39 @@ export function Sidebar({ userName, revisionCount = 0 }: { userName: string; rev
             );
           })}
         </ul>
-        <div className="hidden md:block mt-6 pt-5 border-t border-rule-soft">
+        {/* Foundational actions — not numbered chapters but core scaffolding.
+            Revise reshapes the compass; Settings configures the engine. */}
+        <div className="hidden md:flex flex-col gap-3 mt-6 pt-5 border-t border-rule-soft">
           <Link
             href="/onboarding/1"
-            className={`group flex items-baseline gap-4 transition-colors ${
+            className={`group flex items-center gap-3 transition-colors ${
               pathname.startsWith('/onboarding')
                 ? 'text-stamp'
                 : 'text-ink-2 hover:text-stamp'
             }`}
           >
+            <BookIconSvg size={16} className="shrink-0" />
             <span
-              className={`font-serif italic text-[17px] leading-none transition-colors`}
+              className="font-serif italic text-[17px] leading-none"
               style={{ fontVariationSettings: '"opsz" 14, "SOFT" 50' }}
             >
               Revise
+            </span>
+          </Link>
+          <Link
+            href="/settings"
+            className={`group flex items-center gap-3 transition-colors ${
+              pathname.startsWith('/settings')
+                ? 'text-stamp'
+                : 'text-ink-2 hover:text-stamp'
+            }`}
+          >
+            <GearIconSvg size={16} className="shrink-0" />
+            <span
+              className="font-serif italic text-[17px] leading-none"
+              style={{ fontVariationSettings: '"opsz" 14, "SOFT" 50' }}
+            >
+              Settings
             </span>
           </Link>
         </div>

@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { overrideRecommendation } from '@/actions/calibrate';
 import { RECOMMENDATION_LABELS } from '@/lib/constants';
+import { Select } from '@/components/layout/select';
 import type { Recommendation } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 
@@ -44,16 +45,17 @@ export function RecommendationOverride({ roleId, aiRecommendation, myRecommendat
       <form action={handleSubmit} className="flex flex-wrap items-baseline gap-2">
         <input type="hidden" name="role_id" value={roleId} />
         <input type="hidden" name="ai_recommendation" value={aiRecommendation} />
-        <select
+        <Select
           name="my_recommendation"
           defaultValue={myRecommendation || aiRecommendation}
-          className="field font-serif italic text-[14px]"
+          className="font-serif italic text-[14px]"
           style={{ fontVariationSettings: '"opsz" 14, "SOFT" 50' }}
-        >
-          <option value="apply">apply</option>
-          <option value="stretch">stretch</option>
-          <option value="skip">skip</option>
-        </select>
+          options={[
+            { value: 'apply', label: 'apply' },
+            { value: 'stretch', label: 'stretch' },
+            { value: 'skip', label: 'skip' },
+          ]}
+        />
         <input
           name="reason"
           placeholder="reason"
