@@ -2,27 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-type NavItem = { href: string; label: string; numeral: string };
-
-const NAV_ITEMS: NavItem[] = [
-  { href: '/', label: 'Dashboard', numeral: 'I' },
-  { href: '/evaluate', label: 'Evaluate', numeral: 'II' },
-  { href: '/applications', label: 'Applications', numeral: 'III' },
-  { href: '/companies', label: 'Companies', numeral: 'IV' },
-  { href: '/discover', label: 'Discover', numeral: 'V' },
-  { href: '/people', label: 'People', numeral: 'VI' },
-  { href: '/calibrations', label: 'Calibrations', numeral: 'VII' },
-  { href: '/settings', label: 'Settings', numeral: 'VIII' },
-  { href: '/ledger', label: 'Ledger', numeral: 'IX' },
-  { href: '/archive', label: 'Archive', numeral: 'X' },
-];
+import { NAV_ITEMS } from './nav-items';
 
 export function Sidebar({ userName, revisionCount = 0 }: { userName: string; revisionCount?: number }) {
   const pathname = usePathname();
 
   return (
-    <aside className="shrink-0 border-b md:border-b-0 md:border-r border-rule flex flex-col bg-paper md:w-72">
+    <aside className="shrink-0 border-r border-rule hidden md:flex flex-col bg-paper md:w-72">
       {/* Masthead */}
       <div className="px-5 sm:px-8 md:px-10 pt-6 md:pt-12 pb-5 md:pb-10 md:border-b md:border-rule flex items-start justify-between md:block gap-4">
         <div>

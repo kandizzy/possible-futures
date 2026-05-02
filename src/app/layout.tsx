@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Fraunces, Instrument_Sans, JetBrains_Mono } from "next/font/google";
 import { Sidebar } from "@/components/layout/sidebar";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { getSourceFile } from "@/lib/queries/source-files";
 import { extractNameFromBook } from "@/lib/user-name";
 import { isRitualAcknowledged, isFirstRun, getOnboardingState } from "@/lib/queries/onboarding";
@@ -81,8 +82,9 @@ export default async function RootLayout({
           <main className="flex-1">{children}</main>
         ) : (
           <>
+            <MobileNav userName={userName} revisionCount={revisionCount} />
             <Sidebar userName={userName} revisionCount={revisionCount} />
-            <main className="flex-1 overflow-auto">
+            <main className="flex-1 md:overflow-auto">
               <div className="max-w-5xl mx-auto px-5 sm:px-8 md:px-12 py-8 md:py-14">
                 {children}
               </div>

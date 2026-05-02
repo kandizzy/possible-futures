@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { DEFAULT_MODEL } from './pricing';
+import { getReasoningModel } from '../queries/compass';
 
 let client: Anthropic | null = null;
 
@@ -15,18 +16,15 @@ export function getAnthropicClient(): Anthropic {
 }
 
 // Model precedence: ANTHROPIC_MODEL env var → compass_config.reasoning_model →
-// DEFAULT_MODEL from pricing.ts. The DB lookup is lazy so this stays usable at
-// module-init time before the DB exists.
+// DEFAULT_MODEL from pricing.ts. The DB lookup is wrapped in try/catch so this
+// stays usable at module-init time before the DB exists (build, tests).
 export function getModel(): string {
   if (process.env.ANTHROPIC_MODEL) return process.env.ANTHROPIC_MODEL;
   try {
-    // Imported lazily to avoid a circular compass.ts -> pricing.ts -> client.ts
-    // load order during bundler resolution.
-    const { getReasoningModel } = require('../queries/compass') as typeof import('../queries/compass');
     const fromSettings = getReasoningModel();
     if (fromSettings) return fromSettings;
   } catch {
-    // DB not initialized yet (build time, tests using client mock) — fall through
+    // DB not initialized yet — fall through
   }
   return DEFAULT_MODEL;
 }
