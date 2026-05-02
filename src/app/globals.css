@@ -322,6 +322,15 @@ select {
   color: var(--stamp);
 }
 
+/* Tailwind v4 dropped the legacy `cursor: pointer` default on <button>.
+   Restore it for all interactive buttons so the dozens of inline italic
+   text-buttons across the app (edit, restore, close, etc.) get the right
+   affordance without each one needing `cursor-pointer` baked in. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
 /* Catalog row hover shift */
 .catalog-row {
   position: relative;

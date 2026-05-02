@@ -1,5 +1,6 @@
 import { AtsIndicator } from '@/components/discovery/ats-indicator';
 import { EditCompanyButton } from './edit-company-button';
+import { SkipCompanyButton } from './skip-company-button';
 import type { CompanyWithPipeline } from '@/lib/types';
 
 export function WatchlistRow({ company }: { company: CompanyWithPipeline }) {
@@ -41,7 +42,10 @@ export function WatchlistRow({ company }: { company: CompanyWithPipeline }) {
             category={company.category}
             why_interested={company.why_interested}
             careers_url={company.careers_url}
+            ats_provider={company.ats_provider}
+            ats_slug={company.ats_slug}
           />
+          <SkipCompanyButton companyId={company.id} />
           {company.careers_url && (
             <a
               href={company.careers_url}

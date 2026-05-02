@@ -69,7 +69,10 @@ export async function autofillCompanyDetails(
       systemPrompt: SYSTEM_PROMPT,
       userPrompt,
       temperature: 0.2,
-      maxTokens: 512,
+      // 1024 — comfortably fits all five fields with room for a multi-clause
+      // why_interested. 512 was hitting the cap mid-careers_url for well-known
+      // companies, producing unparseable truncated JSON.
+      maxTokens: 1024,
       context: { type: 'discovery_search' },
     });
     raw = r.text;
@@ -79,7 +82,7 @@ export async function autofillCompanyDetails(
     const r = await callAiApi({
       operation: 'autofill_company',
       model,
-      maxTokens: 512,
+      maxTokens: 1024,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
       context: { type: 'discovery_search' },

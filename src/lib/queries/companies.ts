@@ -103,6 +103,17 @@ export function unskipCompany(id: number): void {
   db.prepare('UPDATE companies SET skipped_at = NULL WHERE id = ?').run(id);
 }
 
+export function skipCompanyById(id: number): void {
+  const db = getDb();
+  db.prepare("UPDATE companies SET skipped_at = datetime('now') WHERE id = ?").run(id);
+}
+
+/** Permanent delete. Caller is responsible for confirming with the user. */
+export function deleteCompanyById(id: number): void {
+  const db = getDb();
+  db.prepare('DELETE FROM companies WHERE id = ?').run(id);
+}
+
 export function getTrackedCompanyNames(): string[] {
   const db = getDb();
   const rows = db

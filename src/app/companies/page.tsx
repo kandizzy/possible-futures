@@ -18,11 +18,23 @@ export default function CompaniesPage() {
   const all = getCompaniesWithPipeline();
   const skipped = getSkippedCompanies();
 
-  const active = all.filter((c) => c.role_count > 0).sort(urgencySort);
-  const watchlist = all.filter((c) => c.role_count === 0);
+  // Active pipeline = companies you're explicitly engaged with: those with
+  // roles attached, OR ones you added manually (manual = "I actually care
+  // about this," distinct from AI-suggested companies that haven't earned
+  // the user's commitment yet).
+  const active = all
+    .filter((c) => c.role_count > 0 || c.source === 'manual')
+    .sort(urgencySort);
+  const watchlist = all.filter((c) => c.role_count === 0 && c.source !== 'manual');
 
   const interviewingCompanies = active.filter((c) => c.interviewing_count > 0 || c.offer_count > 0).length;
-  const verifiedCount = all.filter((c) => c.ats_provider && c.ats_slug).length;
+  // "Active pipeline" = companies where you've actually applied and the
+  // application is still moving (applied / interviewing / offer). Manual
+  // adds and tracked-but-unapplied companies live in the section but don't
+  // count toward the stat.
+  const activePipelineCount = all.filter(
+    (c) => c.applied_count > 0 || c.interviewing_count > 0 || c.offer_count > 0,
+  ).length;
 
   // Group watchlist by category
   const watchlistGrouped: Record<string, typeof watchlist> = {};
@@ -53,11 +65,9 @@ export default function CompaniesPage() {
       <div className="rise flex flex-wrap items-baseline gap-x-8 md:gap-x-10 gap-y-6 pt-6 border-t border-rule" style={{ animationDelay: '60ms' }}>
         <Stat label="Total" value={all.length} />
         <StatDivider />
-        <Stat label="Active pipeline" value={active.length} />
+        <Stat label="Active pipeline" value={activePipelineCount} />
         <StatDivider />
         <Stat label="Interviewing" value={interviewingCompanies} accent={interviewingCompanies > 0} />
-        <StatDivider />
-        <Stat label="ATS verified" value={verifiedCount} />
       </div>
 
       {all.length === 0 ? (

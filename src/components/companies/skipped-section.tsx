@@ -1,7 +1,9 @@
 'use client';
 
-import { useTransition } from 'react';
-import { unskipCompany } from '@/actions/companies';
+import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { deleteCompany, unskipCompany } from '@/actions/companies';
+import { ConfirmModal } from '@/components/layout/confirm-modal';
 import type { Company } from '@/lib/types';
 
 export function SkippedSection({ companies }: { companies: Company[] }) {
@@ -27,9 +29,9 @@ export function SkippedSection({ companies }: { companies: Company[] }) {
             className="font-serif italic text-[13px] text-ink-3 mb-4 max-w-2xl"
             style={{ fontVariationSettings: '"opsz" 13, "SOFT" 40' }}
           >
-            Companies you skipped during Discover. They&apos;re excluded from future
-            suggestions. Restore one to bring it back into the watchlist and let it
-            re-appear in Discover runs.
+            Companies you&apos;ve skipped. They&apos;re excluded from future Discover
+            suggestions. Restore brings one back into the active list; delete
+            removes it from your DB permanently.
           </p>
           <ol className="divide-y divide-rule-soft">
             {companies.map((c) => (
@@ -44,12 +46,25 @@ export function SkippedSection({ companies }: { companies: Company[] }) {
 
 function SkippedRow({ company }: { company: Company }) {
   const [isPending, startTransition] = useTransition();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const router = useRouter();
 
   function handleRestore() {
     startTransition(async () => {
       const fd = new FormData();
       fd.set('id', String(company.id));
       await unskipCompany(fd);
+      router.refresh();
+    });
+  }
+
+  function handleDelete() {
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set('id', String(company.id));
+      await deleteCompany(fd);
+      setConfirmOpen(false);
+      router.refresh();
     });
   }
 
@@ -68,15 +83,43 @@ function SkippedRow({ company }: { company: Company }) {
           )}
         </div>
       </div>
-      <button
-        type="button"
-        onClick={handleRestore}
-        disabled={isPending}
-        className="font-serif italic text-[12px] text-ink-2 hover:text-stamp transition-colors disabled:opacity-50 shrink-0"
-        style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
-      >
-        {isPending ? 'restoring…' : 'restore →'}
-      </button>
+      <div className="flex items-baseline gap-3 shrink-0">
+        <button
+          type="button"
+          onClick={handleRestore}
+          disabled={isPending}
+          className="font-serif italic text-[12px] text-ink-2 hover:text-stamp transition-colors disabled:opacity-50"
+          style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
+        >
+          {isPending ? 'working…' : 'restore →'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirmOpen(true)}
+          disabled={isPending}
+          className="font-serif italic text-[12px] text-ink-3 hover:text-stamp transition-colors disabled:opacity-50"
+          style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
+          title="Delete forever"
+        >
+          delete
+        </button>
+      </div>
+      <ConfirmModal
+        open={confirmOpen}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title={`Delete "${company.name}"?`}
+        body={
+          <>
+            This removes the company from your database permanently. Roles and
+            applications referencing it by name will keep their records, but
+            the company row will be gone.
+          </>
+        }
+        confirmLabel="Delete forever"
+        isPending={isPending}
+        destructive
+      />
     </li>
   );
 }

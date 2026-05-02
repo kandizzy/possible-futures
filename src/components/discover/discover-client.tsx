@@ -38,6 +38,7 @@ export function DiscoverClient({
   const [lastModel, setLastModel] = useState<string | null>(lastSearchModel ?? null);
   const [error, setError] = useState<string | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
+  const [lastManualAdd, setLastManualAdd] = useState<string | null>(null);
   const [isReverifying, startReverifying] = useTransition();
   const [reverifyResult, setReverifyResult] = useState<string | null>(null);
 
@@ -257,8 +258,12 @@ export function DiscoverClient({
         </section>
       )}
 
-      {/* Manual add fallback — opens the same modal used on /companies. */}
-      <section className="pt-6 border-t border-rule">
+      {/* Manual add fallback — opens the same modal used on /companies.
+          /discover only shows AI suggestions, so after a manual add the user
+          would otherwise see no feedback (the new company lives on /companies).
+          We surface a small "added X — view in Companies →" line so it's
+          clear what happened and where it went. */}
+      <section className="pt-6 border-t border-rule space-y-3">
         <button
           type="button"
           onClick={() => setManualOpen(true)}
@@ -267,12 +272,27 @@ export function DiscoverClient({
         >
           Company not in the list? Add it yourself →
         </button>
+        {lastManualAdd && (
+          <p
+            className="font-serif italic text-[13px] text-ink-2"
+            style={{ fontVariationSettings: '"opsz" 13, "SOFT" 40' }}
+          >
+            Added <span className="text-stamp">{lastManualAdd}</span> to your watchlist —{' '}
+            <a
+              href="/companies"
+              className="text-ink hover:text-stamp transition-colors underline decoration-rule hover:decoration-stamp"
+            >
+              view in Companies →
+            </a>
+          </p>
+        )}
       </section>
 
       <CompanyFormModal
         mode="add"
         open={manualOpen}
         onClose={() => setManualOpen(false)}
+        onSuccess={({ name }) => setLastManualAdd(name)}
       />
     </div>
   );

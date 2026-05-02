@@ -2,18 +2,31 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { addCompanyManually, autofillCompany, updateCompany } from '@/actions/companies';
+import { Select } from '@/components/layout/select';
+import { LoadingDots } from '@/components/layout/editorial';
+import type { AtsProvider } from '@/lib/types';
 
 export interface CompanyFormValues {
   name: string;
   category?: string;
   why_interested?: string;
   careers_url?: string;
+  ats_provider?: AtsProvider | null;
+  ats_slug?: string | null;
 }
+
+const ATS_OPTIONS = [
+  { value: 'greenhouse', label: 'Greenhouse' },
+  { value: 'ashby', label: 'Ashby' },
+  { value: 'workable', label: 'Workable' },
+  { value: 'lever', label: 'Lever' },
+];
 
 interface BaseProps {
   open: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  /** Called after a successful save with the saved company's name and id. */
+  onSuccess?: (info: { name: string; companyId: number | null }) => void;
 }
 
 type AddProps = BaseProps & { mode: 'add' };
@@ -36,12 +49,22 @@ export function CompanyFormModal(props: Props) {
   const categoryRef = useRef<HTMLInputElement>(null);
   const whyRef = useRef<HTMLTextAreaElement>(null);
   const careersRef = useRef<HTMLInputElement>(null);
+  const atsSlugRef = useRef<HTMLInputElement>(null);
 
   // Pre-fill values in edit mode; in add mode the inputs are uncontrolled and
   // start empty. Re-keyed below so edit-mode initialValues update when the
   // parent passes a different company.
-  const initialValues =
-    props.mode === 'edit' ? props.initialValues : { name: '', category: '', why_interested: '', careers_url: '' };
+  const initialValues: CompanyFormValues =
+    props.mode === 'edit'
+      ? props.initialValues
+      : { name: '', category: '', why_interested: '', careers_url: '', ats_provider: null, ats_slug: '' };
+  // ATS provider is rendered via the controlled <Select>, so it needs its
+  // own state. Reset whenever the modal opens.
+  const [atsProvider, setAtsProvider] = useState<string>(initialValues.ats_provider ?? '');
+  useEffect(() => {
+    if (open) setAtsProvider(initialValues.ats_provider ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, props.mode === 'edit' ? props.companyId : null]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -93,33 +116,75 @@ export function CompanyFormModal(props: Props) {
       // Only fill empty fields. Important in edit mode so Claude doesn't
       // overwrite curated notes; in add mode the inputs are usually empty so
       // the rule is equivalent. To re-fill a field, clear it first.
+      let filledAny = false;
       const fillIfEmpty = (
         ref: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>,
         value: string | null,
       ) => {
         if (!ref.current || !value) return;
-        if (ref.current.value.trim() === '') ref.current.value = value;
+        if (ref.current.value.trim() === '') {
+          ref.current.value = value;
+          filledAny = true;
+        }
       };
       fillIfEmpty(categoryRef, result.result.category);
       fillIfEmpty(whyRef, result.result.why_interested);
       fillIfEmpty(careersRef, result.result.careers_url);
-      setAutofilled(true);
+      // ATS guesses go into separate state + ref. Only fill when empty.
+      if (result.result.guessed_ats_provider && !atsProvider) {
+        setAtsProvider(result.result.guessed_ats_provider);
+        filledAny = true;
+      }
+      fillIfEmpty(atsSlugRef, result.result.guessed_ats_slug);
+
+      if (filledAny) {
+        setAutofilled(true);
+        return;
+      }
+
+      // Nothing got filled. Distinguish "Claude didn't recognize the company"
+      // (prompt forbids fabrication, returns all-nulls) from "everything was
+      // already filled" so the user gets specific feedback instead of a
+      // silent no-op.
+      const claudeReturnedNothing =
+        !result.result.category &&
+        !result.result.why_interested &&
+        !result.result.careers_url &&
+        !result.result.guessed_ats_provider &&
+        !result.result.guessed_ats_slug;
+      if (claudeReturnedNothing) {
+        setError(
+          `Claude didn't recognize "${nameRef.current?.value.trim()}". Type the details yourself, or add a careers URL above as a hint and try again.`,
+        );
+      } else {
+        setError(
+          'All fields already have content. Clear a field and click Auto-fill again to re-fill it.',
+        );
+      }
     });
   }
 
   function handleSubmit(formData: FormData) {
     setError('');
+    // Inject controlled state values that aren't tied to a native input.
+    formData.set('ats_provider', atsProvider);
     startTransition(async () => {
-      let result: { success: boolean; error?: string };
+      let result: { success: boolean; error?: string; companyId?: number };
+      let savedName: string;
       if (mode === 'add') {
+        savedName = ((formData.get('name') as string) || '').trim();
         result = await addCompanyManually(formData);
       } else {
         formData.set('id', String(props.companyId));
+        savedName = props.initialValues.name;
         result = await updateCompany(formData);
       }
       if (result.success) {
         onClose();
-        onSuccess?.();
+        onSuccess?.({
+          name: savedName,
+          companyId: result.companyId ?? (mode === 'edit' ? props.companyId : null),
+        });
       } else {
         setError(result.error ?? 'Could not save.');
       }
@@ -172,7 +237,7 @@ export function CompanyFormModal(props: Props) {
                 type="button"
                 onClick={handleAutofill}
                 disabled={isPending || isAutofilling}
-                className="font-serif italic text-[12px] text-ink-2 hover:text-stamp transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 font-serif italic text-[12px] text-ink-2 hover:text-stamp transition-colors disabled:opacity-100"
                 style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
                 title={
                   mode === 'edit'
@@ -180,7 +245,14 @@ export function CompanyFormModal(props: Props) {
                     : 'Use AI to fill in details'
                 }
               >
-                {isAutofilling ? 'Auto-filling…' : 'Auto-fill →'}
+                {isAutofilling ? (
+                  <>
+                    <span className="text-stamp">Auto-filling</span>
+                    <LoadingDots />
+                  </>
+                ) : (
+                  'Auto-fill →'
+                )}
               </button>
             </div>
             <input
@@ -244,6 +316,44 @@ export function CompanyFormModal(props: Props) {
               className="field w-full"
               placeholder="https://…"
             />
+          </div>
+
+          {/* ATS — optional. Auto-fill populates these as best-guess; users
+              can also edit them later via the Edit modal or the inline ATS
+              indicator on the Watchlist row. */}
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-3">
+            <div>
+              <label className="smallcaps text-[9px] text-ink-3 block mb-2">
+                ATS provider
+              </label>
+              <Select
+                fullWidth
+                allowEmpty
+                emptyLabel="— none —"
+                value={atsProvider}
+                onChange={(v) => setAtsProvider(v)}
+                disabled={isPending}
+                options={ATS_OPTIONS}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="company-ats-slug"
+                className="smallcaps text-[9px] text-ink-3 block mb-2"
+              >
+                ATS slug
+              </label>
+              <input
+                ref={atsSlugRef}
+                id="company-ats-slug"
+                name="ats_slug"
+                type="text"
+                disabled={isPending}
+                defaultValue={initialValues.ats_slug ?? ''}
+                className="field w-full font-mono text-[12px]"
+                placeholder="e.g. anthropic"
+              />
+            </div>
           </div>
         </div>
 
