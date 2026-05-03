@@ -41,9 +41,30 @@ export default function HorizonsDrawPage() {
     return () => clearInterval(id);
   }, []);
 
+  // Override body background AND kill the noise/vignette pseudos so
+  // element.screenshot with omitBackground produces a truly transparent PNG.
+  // Without this, body::before paints noise across the viewport and gets
+  // captured into every "transparent" pixel as low-alpha fuzz, which gifski
+  // then matte-composites into a visible rectangle on the host slide.
+  useEffect(() => {
+    const styleEl = document.createElement('style');
+    styleEl.id = 'demo-capture-overrides';
+    styleEl.textContent = `
+      html, body { background: transparent !important; }
+      body::before, body::after { display: none !important; }
+    `;
+    document.head.appendChild(styleEl);
+    return () => {
+      styleEl.remove();
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-paper flex items-center justify-center p-8">
-      <figure data-capture-target="horizons-draw" className="bg-paper p-6">
+    <div className="min-h-screen flex items-center justify-center p-8">
+      {/* No bg on the figure — capture script can request a transparent
+          screenshot for variations that need to drop into a paper slide
+          without a visible box edge from palette-quantization drift. */}
+      <figure data-capture-target="horizons-draw">
         {v === '1' && <Variation1 key={tick} />}
         {v === '2' && <Variation2 key={tick} />}
         {v === '3' && <Variation3 key={tick} />}

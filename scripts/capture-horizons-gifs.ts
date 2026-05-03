@@ -35,7 +35,28 @@ function hasBin(name: string): boolean {
   }
 }
 
+interface VariantConfig {
+  /** How long to capture per cycle, ms. */
+  durationMs: number;
+  /** Loops? -1 = play once and stop. 0 = infinite. */
+  repeat: number;
+  /** Wait before capture begins (font settle, animation start sync). */
+  preWaitMs: number;
+}
+
+const VARIANT_CONFIG: Record<1 | 2 | 3 | 4, VariantConfig> = {
+  // 1, 2, 3 keep their previous looping behavior (mostly used for exploration)
+  1: { durationMs: CYCLE_MS, repeat: 0, preWaitMs: 800 },
+  2: { durationMs: CYCLE_MS, repeat: 0, preWaitMs: 800 },
+  3: { durationMs: CYCLE_MS, repeat: 0, preWaitMs: 800 },
+  // v4 is the slide-deck variant — plays once and freezes on the completed
+  // diagram. 3500ms covers the 2900ms draw + ~500ms breathing on the
+  // finished state.
+  4: { durationMs: 3500, repeat: -1, preWaitMs: 200 },
+};
+
 async function captureVariation(v: 1 | 2 | 3 | 4): Promise<string> {
+  const cfg = VARIANT_CONFIG[v];
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), `horizons-v${v}-`));
   const browser = await chromium.launch();
   const ctx = await browser.newContext({
@@ -44,16 +65,23 @@ async function captureVariation(v: 1 | 2 | 3 | 4): Promise<string> {
   });
   const page = await ctx.newPage();
 
+  // Override page background to transparent so element.screenshot with
+  // omitBackground produces a truly transparent PNG instead of capturing
+  // the body's paper bg. Lets the GIF blend into any host page seamlessly.
+  await page.addInitScript(() => {
+    const style = document.createElement('style');
+    style.textContent = 'html, body { background: transparent !important; }';
+    document.documentElement.appendChild(style);
+  });
+
   await page.goto(`${BASE}/demo/horizons-draw?v=${v}`, { waitUntil: 'networkidle' });
   await page.waitForSelector('[data-capture-target="horizons-draw"]');
-  // Let the cycle re-key once so we capture from a known phase, plus a beat
-  // for fonts.
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(cfg.preWaitMs);
 
   const card = page.locator('[data-capture-target="horizons-draw"]');
 
   const FRAME_MS = 1000 / FPS;
-  const FRAME_COUNT = (CYCLE_MS / FRAME_MS) | 0;
+  const FRAME_COUNT = (cfg.durationMs / FRAME_MS) | 0;
   console.log(`v${v}: capturing ${FRAME_COUNT} frames at ${FPS}fps`);
 
   const startedAt = Date.now();
@@ -63,7 +91,7 @@ async function captureVariation(v: 1 | 2 | 3 | 4): Promise<string> {
     if (wait > 0) await page.waitForTimeout(wait);
     await card.screenshot({
       path: path.join(tmp, `frame-${String(i).padStart(4, '0')}.png`),
-      omitBackground: false,
+      omitBackground: true,
     });
   }
   await browser.close();
@@ -78,15 +106,19 @@ async function captureVariation(v: 1 | 2 | 3 | 4): Promise<string> {
     .map((f) => path.join(tmp, f));
 
   if (hasBin('gifski')) {
+    // --matte: semi-transparent pixels (curve antialiased edges, anything
+    // less than fully opaque) get composited against the paper color before
+    // quantization. Without it, gifski dithers them to alternating
+    // transparent/opaque pixels and produces a visible checkerboard texture
+    // in the output GIF. Paper hex matches --paper in globals.css.
     execFileSync(
       'gifski',
       [
         '--fps', String(FPS),
-        // Scale down to keep file size small — 480 wide is plenty for a
-        // slide-deck embed and roughly halves the file size vs the
-        // captured 2x retina width.
         '--width', '480',
-        '--quality', '85',
+        '--quality', '90',
+        '--matte', 'f4eee4',
+        '--repeat', String(cfg.repeat),
         '--output', out,
         ...frames,
       ],
