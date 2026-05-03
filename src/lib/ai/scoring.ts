@@ -1,5 +1,8 @@
 import { getModel } from './client';
 import { callAiApi, callAiCli, callAiLocal, type LogContext } from './call';
+import { extractRoleList, buildSlimBook } from './slim-book';
+import { selectRelevantRoleIndices } from './select-relevant-roles';
+import { getSourceFile } from '../queries/source-files';
 import {
   getScoringSystemPrompt,
   buildScoringUserPrompt,
@@ -39,11 +42,29 @@ export async function scorePosting(
 
   let rawResponse: string;
 
+  // For CLI/local modes the full Book can blow past the model's effective
+  // working size and time out. Run a quick selector pass first to pick
+  // which roles are actually relevant to this posting, then build a slim
+  // Book containing only those. API mode skips this — its prompt cache
+  // makes the full Book essentially free after the first call, and a
+  // slim Book would invalidate the cache.
+  let bookOverride: string | undefined;
+  if (mode === 'cli' || mode === 'local') {
+    const fullBook = getSourceFile('PROJECT_BOOK')?.content;
+    if (fullBook) {
+      const roles = extractRoleList(fullBook);
+      if (roles.length > 5) {
+        const sel = await selectRelevantRoleIndices(postingText, roles);
+        bookOverride = buildSlimBook(fullBook, sel.indices);
+      }
+    }
+  }
+
   if (mode === 'cli') {
     const result = await callAiCli({
       operation: 'score_posting',
       systemPrompt: getScoringSystemPrompt(),
-      userPrompt: buildScoringUserPrompt(postingText, url),
+      userPrompt: buildScoringUserPrompt(postingText, url, { bookOverride }),
       context,
     });
     rawResponse = result.text;
@@ -51,7 +72,7 @@ export async function scorePosting(
     const result = await callAiLocal({
       operation: 'score_posting',
       systemPrompt: getScoringSystemPrompt(),
-      userPrompt: buildScoringUserPrompt(postingText, url),
+      userPrompt: buildScoringUserPrompt(postingText, url, { bookOverride }),
       temperature: 0.2,
       maxTokens: 4096,
       context,

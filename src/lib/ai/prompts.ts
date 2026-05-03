@@ -105,7 +105,7 @@ function formatCalibrations(
  * prompt caching so discovery runs scoring 20 postings in a row pay only the
  * first call's full input cost; subsequent calls read from cache at 0.1x.
  */
-export function buildScoringStablePrefix(): string {
+export function buildScoringStablePrefix(opts?: { bookOverride?: string }): string {
   const compass = getSourceFile('JOB_SEARCH_COMPASS.md');
   const book = getSourceFile('PROJECT_BOOK');
   const playbook = getSourceFile('APPLICATION_PLAYBOOK.md');
@@ -126,7 +126,11 @@ export function buildScoringStablePrefix(): string {
   }
 
   parts.push('\n=== CAREER HISTORY (PROJECT BOOK) ===');
-  parts.push(book?.content || '[Project Book not loaded. Run the seed script.]');
+  // bookOverride lets CLI/local mode pass in a slimmer Book (only roles
+  // relevant to the posting being scored) to keep the prompt under the
+  // model's effective working size. API mode always passes the full Book
+  // because prompt caching makes its size effectively free.
+  parts.push(opts?.bookOverride || book?.content || '[Project Book not loaded. Run the seed script.]');
 
   parts.push('\n=== APPLICATION PLAYBOOK ===');
   parts.push(playbook?.content || '[Playbook not loaded. Run the seed script.]');
@@ -151,8 +155,14 @@ export function buildScoringVolatileSuffix(postingText: string, url?: string | n
 
 /**
  * Backwards-compatible concatenation — used by the CLI path (which can't
- * benefit from prompt caching).
+ * benefit from prompt caching). Accepts an optional bookOverride so the
+ * CLI/local two-pass scoring flow can pass a slim Book (only roles
+ * relevant to the posting) instead of the full one.
  */
-export function buildScoringUserPrompt(postingText: string, url?: string | null): string {
-  return buildScoringStablePrefix() + buildScoringVolatileSuffix(postingText, url);
+export function buildScoringUserPrompt(
+  postingText: string,
+  url?: string | null,
+  opts?: { bookOverride?: string },
+): string {
+  return buildScoringStablePrefix(opts) + buildScoringVolatileSuffix(postingText, url);
 }
