@@ -16,6 +16,7 @@
     "reset:sandbox": "rm -f data/sandbox.db data/sandbox.db-shm data/sandbox.db-wal && rm -rf data/sandbox-output && echo 'sandbox cleared — next dev:sandbox will boot into first-run onboarding'",
     "capture-tutorial": "BASE_URL=http://localhost:3000 npx tsx scripts/capture-tutorial.ts",
     "capture-radar-gif": "BASE_URL=http://localhost:3000 npx tsx scripts/capture-radar-gif.ts",
+    "capture-horizons-gifs": "BASE_URL=http://localhost:3000 npx tsx scripts/capture-horizons-gifs.ts",
     "seed:tutorial": "DB_FILE=sandbox.db tsx scripts/seed-tutorial.ts",
     "test": "vitest run",
     "test:watch": "vitest",
