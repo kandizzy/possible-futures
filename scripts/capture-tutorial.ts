@@ -40,6 +40,10 @@ async function capture(
   step++;
   const filename = `${String(step).padStart(2, '0')}-${name}.png`;
   await page.waitForTimeout(400);
+  // Wait for web fonts to actually load before snapping. Without this the
+  // first few shots use fallbacks (Georgia for Fraunces, system-ui for
+  // Instrument Sans) and the typography looks wrong.
+  await page.evaluate(() => document.fonts.ready);
 
   // Strip Next.js dev UI (badge, overlay, toasts) before each shot. The
   // addInitScript CSS catches known selectors, but Next's custom-element

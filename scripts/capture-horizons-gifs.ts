@@ -76,6 +76,9 @@ async function captureVariation(v: 1 | 2 | 3 | 4): Promise<string> {
 
   await page.goto(`${BASE}/demo/horizons-draw?v=${v}`, { waitUntil: 'networkidle' });
   await page.waitForSelector('[data-capture-target="horizons-draw"]');
+  // Wait for Google Fonts to fully resolve before any frame capture.
+  // networkidle alone isn't enough for variable fonts like Fraunces.
+  await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(cfg.preWaitMs);
 
   const card = page.locator('[data-capture-target="horizons-draw"]');

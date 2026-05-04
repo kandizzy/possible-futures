@@ -12,6 +12,9 @@ async function main() {
     deviceScaleFactor: 2,
   });
   await page.goto('http://localhost:8765/#/0', { waitUntil: 'networkidle' });
+  // Wait for Google Fonts (Fraunces with variable axes is a big file) to
+  // resolve before snapping, or the title flashes in fallback fonts.
+  await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(2500); // let the GIF finish drawing
   const out = path.join(process.cwd(), '/tmp/title-slide-preview.png');
   await page.screenshot({ path: out, fullPage: false });

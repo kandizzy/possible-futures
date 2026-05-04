@@ -58,7 +58,9 @@ async function main() {
 
   await page.goto(URL, { waitUntil: 'networkidle' });
   await page.waitForSelector('[data-capture-target="radar-cycle"]');
-  // Give fonts a beat to settle.
+  // Wait for web fonts to fully load — Fraunces with variable axes can lag
+  // behind networkidle on first cold render.
+  await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(800);
 
   const card = page.locator('[data-capture-target="radar-cycle"]');
