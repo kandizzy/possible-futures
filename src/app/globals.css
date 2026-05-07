@@ -331,7 +331,11 @@ button:not(:disabled),
   cursor: pointer;
 }
 
-/* Catalog row hover shift */
+/* Catalog row hover indicator — small red mark animates in from the left
+   margin under the role's index number. Positioned at fixed offsets per
+   breakpoint so it actually sits next to the "01"-style numeral on both
+   layouts (the role row uses py-5 on mobile, py-6 on desktop with an extra
+   pt-2 on the number, so the numeral lives at different y offsets). */
 .catalog-row {
   position: relative;
   transition: background-color 0.15s ease;
@@ -339,15 +343,23 @@ button:not(:disabled),
 .catalog-row::before {
   content: '';
   position: absolute;
-  left: 0;
-  top: 50%;
+  left: 2px;
+  top: 2rem;
   width: 0;
   height: 1px;
   background: var(--stamp);
   transition: width 0.2s ease;
 }
+@media (min-width: 768px) {
+  .catalog-row::before {
+    top: 2.85rem;
+  }
+}
+/* Width on hover matches the visual width of the "01" numeral (~14px in
+   monospace at 9-10px font size) instead of the previous 24px which read
+   as a generic editorial dash unrelated to the index. */
 .catalog-row:hover::before {
-  width: 24px;
+  width: 14px;
 }
 
 /* Staggered page-in — additive only, never hides content */

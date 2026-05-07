@@ -14,9 +14,8 @@ import { getCompanyByName } from '@/lib/queries/companies';
 import { reapOrphanedRuns } from '@/lib/queries/discovery';
 import type { RoleStatus } from '@/lib/types';
 import { RoleRow } from '@/components/roles/role-row';
+import { StatusFilterBar, type FilterOption } from '@/components/dashboard/status-filter-bar';
 import Link from 'next/link';
-
-type FilterOption = RoleStatus | 'All' | 'Discovered';
 
 const STATUS_OPTIONS: FilterOption[] = [
   'All',
@@ -138,63 +137,17 @@ export default async function DashboardPage({
         </div>
       )}
 
-      {/* Filter bar — underlined table of contents */}
-      <div className="rise" style={{ animationDelay: '80ms' }}>
-        <div className="smallcaps text-[9px] text-ink-3 mb-3">Filter by status</div>
-        <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 pb-3 border-b border-rule">
-          {STATUS_OPTIONS.map((s) => {
-            const active = statusFilter === s;
-            const count =
-              s === 'All'
-                ? totalRoles
-                : s === 'Discovered'
-                  ? discoveredCount
-                  : statusCounts[s] || 0;
-            // Hide the Discovered filter entirely if there's nothing to review
-            if (s === 'Discovered' && discoveredCount === 0 && !active) {
-              return null;
-            }
-            const accentDiscovered = s === 'Discovered' && count > 0;
-            return (
-              <Link
-                key={s}
-                href={s === 'All' ? '/' : `/?status=${s}`}
-                className="group inline-flex items-baseline gap-1.5 relative"
-              >
-                <span
-                  className={`font-serif text-[16px] transition-colors ${
-                    active
-                      ? 'text-stamp italic'
-                      : accentDiscovered
-                        ? 'text-stamp group-hover:text-stamp-deep'
-                        : 'text-ink-2 group-hover:text-ink'
-                  }`}
-                  style={{
-                    fontVariationSettings: active
-                      ? '"opsz" 16, "SOFT" 60'
-                      : '"opsz" 16',
-                  }}
-                >
-                  {s}
-                </span>
-                <span
-                  className={`font-mono tabular text-[9px] ${
-                    active || accentDiscovered ? 'text-stamp' : 'text-ink-3'
-                  }`}
-                >
-                  {count}
-                </span>
-                {active && (
-                  <span
-                    aria-hidden
-                    className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-stamp"
-                  />
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+      {/* Filter bar — collapses on mobile to just the active filter; expands
+          inline on md+ as the original underlined table-of-contents row. */}
+      <StatusFilterBar
+        options={STATUS_OPTIONS}
+        active={statusFilter}
+        counts={{
+          All: totalRoles,
+          Discovered: discoveredCount,
+          ...statusCounts,
+        }}
+      />
 
       {/* Catalog */}
       <div className="rise" style={{ animationDelay: '160ms' }}>
