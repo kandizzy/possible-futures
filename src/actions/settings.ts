@@ -1,7 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { setAiMode, setMaterialsMode, getCompassConfig, getAiMode, upsertCompassConfig, setReasoningModel, getLocalConfig, setLocalConfig } from '@/lib/queries/compass';
+import { setAiMode, setMaterialsMode, getCompassConfig, getAiMode, upsertCompassConfig, setReasoningModel, getLocalConfig, setLocalConfig, setDateFormat } from '@/lib/queries/compass';
+import type { DateLocale } from '@/lib/format-date';
 import { PRICING } from '@/lib/ai/pricing';
 import { getSourceFile, getResumeVersionLabels, upsertSourceFile, getAllSourceFiles } from '@/lib/queries/source-files';
 import { parseCompass } from '@/lib/parsers/compass';
@@ -228,7 +229,17 @@ export async function getSettings() {
     local_base_url: config?.local_base_url || 'http://localhost:1234/v1',
     local_model: config?.local_model || '',
     local_api_key: config?.local_api_key || null,
+    date_format: (config?.date_format ?? 'us') as DateLocale,
   };
+}
+
+export async function updateDateFormat(formData: FormData): Promise<{ success: boolean; date_format: DateLocale }> {
+  const raw = formData.get('date_format');
+  const locale: DateLocale = raw === 'european' || raw === 'iso' ? raw : 'us';
+  setDateFormat(locale);
+  revalidatePath('/settings');
+  revalidatePath('/roles', 'layout');
+  return { success: true, date_format: locale };
 }
 
 export async function updateReasoningModel(formData: FormData): Promise<{ success: boolean; model: string }> {

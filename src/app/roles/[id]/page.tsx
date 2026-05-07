@@ -19,6 +19,8 @@ import { DeleteRoleButton } from '@/components/roles/delete-role-button';
 import { ArchiveRoleButton } from '@/components/roles/archive-role-button';
 import { RestoreRoleButton } from '@/components/roles/restore-role-button';
 import { MarkSubmittedButton } from '@/components/roles/mark-submitted-button';
+import { formatDate } from '@/lib/format-date';
+import { getDateFormat } from '@/lib/queries/compass';
 
 export default async function RoleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -35,6 +37,7 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
   const scoreCls = getScoreColor(total);
   const application = getApplicationByRoleId(role.id);
   const hasMaterials = application?.cover_letter_generated === true;
+  const dateLocale = getDateFormat();
 
   return (
     <div className="space-y-16">
@@ -139,15 +142,31 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
                 )}
                 {role.date_added && (
                   <MetaRow label="Added">
-                    <span className="font-mono tabular text-[12px] text-ink-2">
-                      {role.date_added}
+                    <span className="font-serif italic text-[13px] text-ink-2" style={{ fontVariationSettings: '"opsz" 13, "SOFT" 40' }}>
+                      {formatDate(role.date_added, dateLocale)}
                     </span>
                   </MetaRow>
                 )}
               </div>
+
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+                <Link
+                  href={`/roles/${role.id}/materials`}
+                  className="btn-stamp"
+                >
+                  {hasMaterials ? 'View Materials →' : 'Draft Materials →'}
+                </Link>
+                {hasMaterials && (
+                  <MarkSubmittedButton
+                    roleId={role.id}
+                    isSubmitted={application?.current_status === 'Submitted'}
+                    dateApplied={application?.date_applied}
+                  />
+                )}
+              </div>
             </div>
 
-            <div className="flex flex-col items-center shrink-0 self-start">
+            <div className="flex flex-col items-center shrink-0 self-center md:self-start order-first md:order-none">
               <ScoreRadar
                 scores={role.ai_scores}
                 className="w-[240px] h-[240px]"
@@ -170,21 +189,6 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
                 >
                   Your calibration:{' '}
                   <span className="not-italic font-mono tabular text-ink">{myTotal}</span>
-                </div>
-              )}
-              <Link
-                href={`/roles/${role.id}/materials`}
-                className="btn-stamp mt-6"
-              >
-                {hasMaterials ? 'View Materials →' : 'Draft Materials →'}
-              </Link>
-              {hasMaterials && (
-                <div className="mt-4">
-                  <MarkSubmittedButton
-                    roleId={role.id}
-                    isSubmitted={application?.current_status === 'Submitted'}
-                    dateApplied={application?.date_applied}
-                  />
                 </div>
               )}
             </div>
@@ -373,7 +377,7 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
         {role.archived && (
           <div className="smallcaps text-[9px] text-ink-3">
             Archived
-            {role.date_archived ? ` · ${role.date_archived.slice(0, 10)}` : ''}
+            {role.date_archived ? ` · ${formatDate(role.date_archived, dateLocale)}` : ''}
           </div>
         )}
         <div className="flex flex-wrap items-baseline gap-x-6 gap-y-3">
@@ -398,8 +402,8 @@ function Section({
 }) {
   return (
     <section className="rise">
-      <div className="grid grid-cols-[8rem_1fr] gap-8">
-        <div className="smallcaps text-[9px] text-ink-3 pt-1 sticky top-8">
+      <div className="flex flex-col gap-3 md:grid md:grid-cols-[8rem_1fr] md:gap-8">
+        <div className="smallcaps text-[9px] text-ink-3 md:pt-1 md:sticky md:top-8">
           {label}
         </div>
         <div>{children}</div>

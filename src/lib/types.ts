@@ -291,6 +291,7 @@ export interface CompassConfig {
   local_base_url: string;
   local_model: string;
   local_api_key: string | null;
+  date_format: 'us' | 'european' | 'iso';
   updated_at: string;
 }
 

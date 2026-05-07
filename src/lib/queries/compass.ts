@@ -1,6 +1,7 @@
 import { getDb } from '../db';
 import { DEFAULT_MODEL } from '../ai/pricing';
 import type { CompassConfig, AiMode, MaterialsMode } from '../types';
+import type { DateLocale } from '../format-date';
 
 interface CompassRow {
   id: number;
@@ -13,6 +14,7 @@ interface CompassRow {
   local_base_url: string | null;
   local_model: string | null;
   local_api_key: string | null;
+  date_format: string | null;
   updated_at: string;
 }
 
@@ -20,6 +22,11 @@ export interface LocalConfig {
   base_url: string;
   model: string;
   api_key: string | null;
+}
+
+function normalizeDateFormat(raw: string | null | undefined): DateLocale {
+  if (raw === 'european' || raw === 'iso') return raw;
+  return 'us';
 }
 
 export function getCompassConfig(): CompassConfig | null {
@@ -36,8 +43,19 @@ export function getCompassConfig(): CompassConfig | null {
     local_base_url: row.local_base_url || 'http://localhost:1234/v1',
     local_model: row.local_model || '',
     local_api_key: row.local_api_key || null,
+    date_format: normalizeDateFormat(row.date_format),
     updated_at: row.updated_at,
   };
+}
+
+export function getDateFormat(): DateLocale {
+  const config = getCompassConfig();
+  return config?.date_format ?? 'us';
+}
+
+export function setDateFormat(locale: DateLocale): void {
+  const db = getDb();
+  db.prepare("UPDATE compass_config SET date_format = ?, updated_at = datetime('now') WHERE id = 1").run(locale);
 }
 
 export function upsertCompassConfig(data: {

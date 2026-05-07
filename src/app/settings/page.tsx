@@ -9,7 +9,9 @@ import { CompassEditor } from '@/components/settings/compass-editor';
 import { SourceFilesRefresh } from '@/components/settings/source-files-refresh';
 import { BaseResumesEditor } from '@/components/settings/base-resumes-editor';
 import { SourceFileEditor } from '@/components/settings/source-file-editor';
+import { DateFormatToggle } from '@/components/settings/date-format-toggle';
 import { PageHeader, Panel } from '@/components/layout/editorial';
+import { formatDate } from '@/lib/format-date';
 import type { AiMode, MaterialsMode } from '@/lib/types';
 
 export default async function SettingsPage() {
@@ -37,7 +39,7 @@ export default async function SettingsPage() {
           action={
             onboardingState.completed_at && (
               <span className="smallcaps text-[9px] text-ink-3">
-                Last printed {onboardingState.completed_at.slice(0, 10)}
+                Last printed {formatDate(onboardingState.completed_at, settings.date_format)}
               </span>
             )
           }
@@ -54,6 +56,7 @@ export default async function SettingsPage() {
               can leave and come back.
             </p>
           </div>
+          <DateFormatToggle initialFormat={settings.date_format} />
         </Panel>
 
         <AiModeToggle

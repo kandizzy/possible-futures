@@ -5,8 +5,8 @@ export function GapAnalysis({ gaps }: { gaps: GapItem[] }) {
 
   return (
     <section className="rise">
-      <div className="grid grid-cols-[8rem_1fr] gap-8">
-        <div className="smallcaps text-[9px] text-ink-3 pt-1 sticky top-8">
+      <div className="flex flex-col gap-3 md:grid md:grid-cols-[8rem_1fr] md:gap-8">
+        <div className="smallcaps text-[9px] text-ink-3 md:pt-1 md:sticky md:top-8">
           Gaps &amp; studies
         </div>
         <div className="space-y-8">

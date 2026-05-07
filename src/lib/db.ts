@@ -60,6 +60,9 @@ function migrate(db: Database.Database): void {
   if (!colNames.has('local_api_key')) {
     db.exec("ALTER TABLE compass_config ADD COLUMN local_api_key TEXT");
   }
+  if (!colNames.has('date_format')) {
+    db.exec("ALTER TABLE compass_config ADD COLUMN date_format TEXT NOT NULL DEFAULT 'us'");
+  }
 
   // Migration: add gap_analysis to roles table
   const rolesCols = db.prepare("PRAGMA table_info(roles)").all() as { name: string }[];
