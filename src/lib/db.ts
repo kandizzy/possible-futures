@@ -132,6 +132,40 @@ function migrate(db: Database.Database): void {
       AND r.status IN ('Applied', 'Interviewing', 'Offer', 'Rejected', 'Withdrawn')
   `);
 
+  // Backfill: roles whose app row advanced past 'Submitted' (Phone Screen,
+  // Interview, Take Home, Offer, Rejected, Withdrawn) but whose role.status
+  // didn't follow along — happens when the user changed app status from the
+  // Applications page before the app→role sync existed. Without this, the
+  // dashboard's Interviewing filter misses Phone Screen / Interview / Take
+  // Home roles, since it queries by roles.status. Only updates roles whose
+  // status is already in the application lifecycle, so a deliberate
+  // 'Ghosted' / 'Skipped' / 'New' isn't clobbered.
+  db.exec(`
+    UPDATE roles
+    SET status = CASE a.current_status
+      WHEN 'Submitted' THEN 'Applied'
+      WHEN 'Phone Screen' THEN 'Interviewing'
+      WHEN 'Interview' THEN 'Interviewing'
+      WHEN 'Take Home' THEN 'Interviewing'
+      WHEN 'Offer' THEN 'Offer'
+      WHEN 'Rejected' THEN 'Rejected'
+      WHEN 'Withdrawn' THEN 'Withdrawn'
+    END
+    FROM applications a
+    WHERE a.role_id = roles.id
+      AND a.current_status IN ('Submitted', 'Phone Screen', 'Interview', 'Take Home', 'Offer', 'Rejected', 'Withdrawn')
+      AND roles.status IN ('Applied', 'Interviewing', 'Offer', 'Rejected', 'Withdrawn')
+      AND roles.status != CASE a.current_status
+        WHEN 'Submitted' THEN 'Applied'
+        WHEN 'Phone Screen' THEN 'Interviewing'
+        WHEN 'Interview' THEN 'Interviewing'
+        WHEN 'Take Home' THEN 'Interviewing'
+        WHEN 'Offer' THEN 'Offer'
+        WHEN 'Rejected' THEN 'Rejected'
+        WHEN 'Withdrawn' THEN 'Withdrawn'
+      END
+  `);
+
   // Migration: add onboarding_draft and onboarding_state tables
   const draftTable = db.prepare(
     "SELECT name FROM sqlite_master WHERE type='table' AND name='onboarding_draft'"

@@ -8,6 +8,21 @@ import type { ResumeVersion, RoleStatus } from '@/lib/types';
 
 const VALID_APP_STATUSES = new Set(['Submitted', 'Phone Screen', 'Interview', 'Take Home', 'Offer', 'Rejected', 'Withdrawn']);
 
+// Mirror the inverse of the role→app mapping in calibrate.ts:updateStatus, so
+// changing the app status from the Applications page keeps the role status in
+// step. Without this, the dashboard's role-status filters (e.g. Interviewing,
+// which includes Phone Screen / Interview / Take Home on the app side) miss
+// applications that were advanced from the Applications page.
+const APP_TO_ROLE_STATUS: Record<string, RoleStatus | null> = {
+  Submitted: 'Applied',
+  'Phone Screen': 'Interviewing',
+  Interview: 'Interviewing',
+  'Take Home': 'Interviewing',
+  Offer: 'Offer',
+  Rejected: 'Rejected',
+  Withdrawn: 'Withdrawn',
+};
+
 export async function createApplication(formData: FormData): Promise<{ success: boolean; error?: string }> {
   const roleId = Number(formData.get('role_id'));
   const resumeVersion = formData.get('resume_version') as ResumeVersion | null;
@@ -52,6 +67,19 @@ export async function changeApplicationStatus(formData: FormData): Promise<{ suc
     const message = err instanceof Error ? err.message : 'Unknown error';
     return { success: false, error: `Failed to update status: ${message}` };
   }
+
+  const newRoleStatus = APP_TO_ROLE_STATUS[status];
+  if (newRoleStatus) {
+    const row = getDb()
+      .prepare('SELECT role_id FROM applications WHERE id = ?')
+      .get(appId) as { role_id: number } | undefined;
+    if (row) {
+      updateRoleStatus(row.role_id, newRoleStatus);
+      revalidatePath('/');
+      revalidatePath(`/roles/${row.role_id}`);
+    }
+  }
+
   revalidatePath('/applications');
   return { success: true };
 }
