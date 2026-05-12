@@ -9,11 +9,33 @@ export function extractJson<T>(raw: string): T {
     jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
   }
 
-  // If the response has text before the JSON, try to extract just the JSON
+  // Walk the string to find the first balanced { ... } object, ignoring
+  // braces inside strings. This is more robust than indexOf/lastIndexOf,
+  // which fails when the model emits trailing prose or a second block.
   const jsonStart = jsonText.indexOf('{');
-  const jsonEnd = jsonText.lastIndexOf('}');
-  if (jsonStart >= 0 && jsonEnd > jsonStart) {
-    jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
+  if (jsonStart >= 0) {
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+    let end = -1;
+    for (let i = jsonStart; i < jsonText.length; i++) {
+      const ch = jsonText[i];
+      if (inString) {
+        if (escape) escape = false;
+        else if (ch === '\\') escape = true;
+        else if (ch === '"') inString = false;
+        continue;
+      }
+      if (ch === '"') inString = true;
+      else if (ch === '{') depth++;
+      else if (ch === '}') {
+        depth--;
+        if (depth === 0) { end = i; break; }
+      }
+    }
+    if (end > jsonStart) {
+      jsonText = jsonText.substring(jsonStart, end + 1);
+    }
   }
 
   try {

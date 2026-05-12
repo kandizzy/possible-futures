@@ -47,4 +47,18 @@ describe('extractJson', () => {
       scores: { want: { score: 3, rationale: 'good fit' } },
     });
   });
+
+  it('strips trailing prose even when it contains a closing brace', () => {
+    const json = '{"scores":{"want":{"score":3,"rationale":"good fit"}}}';
+    const withTrailing =
+      json + '\n\nNote: this role fits because of {factor A}, {factor B}.';
+    expect(extractJson(withTrailing)).toEqual({
+      scores: { want: { score: 3, rationale: 'good fit' } },
+    });
+  });
+
+  it('ignores braces that appear inside string values', () => {
+    const input = '{"s":"contains } a brace","n":1}';
+    expect(extractJson(input)).toEqual({ s: 'contains } a brace', n: 1 });
+  });
 });
