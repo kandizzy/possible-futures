@@ -178,9 +178,239 @@
       z-index: 10;
     }
     .reveal .slide-number a { color: var(--ink-3); text-decoration: none; }
+
+    /* ------------------------------------------------------------------ */
+    /* Mobile stacked mode — phones ≤768px get a vertical-scroll article    */
+    /* served from the same HTML. Reveal.js init is skipped; these rules   */
+    /* unscale and unstack the deck so sections flow naturally.            */
+    /* ------------------------------------------------------------------ */
+    .mobile-header { display: none; }
+
+    body.mobile-stack {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-serif);
+      font-size: 16px;
+      line-height: 1.55;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    body.mobile-stack,
+    body.mobile-stack *,
+    body.mobile-stack *::before,
+    body.mobile-stack *::after {
+      box-sizing: border-box;
+    }
+    body.mobile-stack p,
+    body.mobile-stack li,
+    body.mobile-stack a,
+    body.mobile-stack h1,
+    body.mobile-stack h2 {
+      overflow-wrap: anywhere;
+      word-wrap: break-word;
+    }
+    body.mobile-stack .reveal {
+      position: static;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+      touch-action: pan-y;
+    }
+    body.mobile-stack .reveal .slides {
+      position: static;
+      width: 100%;
+      height: auto;
+      transform: none !important;
+      left: auto; top: auto;
+      perspective: none;
+      text-align: left;
+      pointer-events: auto;
+    }
+    body.mobile-stack .reveal section,
+    body.mobile-stack .reveal .slides > section,
+    body.mobile-stack .reveal .slides > section > section {
+      position: static;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      min-height: 0;
+      padding: 36px 18px;
+      margin: 0;
+      transform: none !important;
+      top: auto; left: auto;
+      border-bottom: 1px solid var(--rule);
+      page-break-inside: avoid;
+      pointer-events: auto !important;
+      overflow: hidden;
+    }
+    body.mobile-stack .reveal section:last-of-type { border-bottom: 0; }
+
+    body.mobile-stack .reveal h1 {
+      font-size: clamp(32px, 8vw, 44px) !important;
+      line-height: 1.02;
+      margin: 0 0 0.25em 0;
+    }
+    body.mobile-stack .reveal h2 {
+      font-size: 22px !important;
+      margin: 0 0 0.4em 0;
+    }
+    body.mobile-stack .reveal h3 {
+      font-size: 11px !important;
+      margin: 0 0 0.8em 0;
+    }
+    body.mobile-stack .reveal p,
+    body.mobile-stack .reveal li {
+      font-size: 16px !important;
+      line-height: 1.55;
+      margin: 0.4em 0;
+    }
+    body.mobile-stack .reveal .sub {
+      font-size: 14px !important;
+      margin: 0.2em 0 0.6em 0;
+    }
+    body.mobile-stack .reveal pre {
+      margin: 0.8em 0;
+      padding: 0.9em 1em;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    body.mobile-stack .reveal pre code {
+      font-size: 13px !important;
+      white-space: pre;
+    }
+    body.mobile-stack .reveal code { font-size: 14px !important; }
+
+    body.mobile-stack .reveal .two-col {
+      grid-template-columns: 1fr;
+      gap: 0.8em;
+    }
+    body.mobile-stack .reveal .slide-layout .slide-label {
+      position: static;
+      width: auto;
+      margin-bottom: 0.6em;
+    }
+    body.mobile-stack .reveal .slide-layout .slide-main {
+      margin-left: 0;
+      padding-right: 0;
+    }
+    body.mobile-stack .reveal .slide-layout .slide-main img.screenshot {
+      width: 100%;
+    }
+    body.mobile-stack .reveal img.screenshot {
+      width: 100%;
+      max-width: 100%;
+      margin-top: 0.6em;
+      cursor: zoom-in;
+      box-shadow: 0 2px 10px rgba(26, 21, 18, 0.06);
+    }
+    body.mobile-stack .reveal .slide-number,
+    body.mobile-stack .reveal .controls,
+    body.mobile-stack .reveal .progress,
+    body.mobile-stack .reveal .backgrounds { display: none !important; }
+
+    /* Title slide: center the wordmark + hero image instead of left-stacking */
+    body.mobile-stack .reveal section:first-of-type { text-align: center; }
+    body.mobile-stack .reveal section:first-of-type h1 { text-align: center; }
+
+    /* Sticky mini-header — only shown on mobile, gives a persistent anchor */
+    body.mobile-stack .mobile-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 10px 20px;
+      background: color-mix(in oklab, var(--paper) 92%, transparent);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--rule);
+    }
+    body.mobile-stack .mobile-header .wordmark {
+      font-family: var(--font-serif);
+      font-size: 15px;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      font-variation-settings: "opsz" 24, "SOFT" 40;
+    }
+    body.mobile-stack .mobile-header .wordmark em {
+      color: var(--stamp);
+      font-style: italic;
+    }
+    body.mobile-stack .mobile-header a {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-3);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+
+    /* Tap-to-zoom dialog for screenshots */
+    dialog#zoom {
+      padding: 0;
+      border: 0;
+      background: rgba(26, 21, 18, 0.92);
+      color: var(--paper);
+      max-width: 100vw;
+      max-height: 100vh;
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      position: fixed;
+      inset: 0;
+    }
+    dialog#zoom::backdrop { background: rgba(26, 21, 18, 0.85); }
+    dialog#zoom .zoom-scroll {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      align-items: safe center;
+      justify-content: safe center;
+    }
+    dialog#zoom img {
+      max-width: none;
+      width: auto;
+      height: auto;
+      display: block;
+    }
+    dialog#zoom .zoom-close-form {
+      position: absolute;
+      top: max(12px, env(safe-area-inset-top));
+      right: max(14px, env(safe-area-inset-right));
+      margin: 0;
+      padding: 0;
+      z-index: 10;
+    }
+    dialog#zoom .zoom-close {
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      border: 0;
+      background: rgba(244, 238, 228, 0.95);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
   </style>
 </head>
 <body>
+
+<header class="mobile-header" aria-hidden="true">
+  <span class="wordmark">Possible <em>Futures.</em></span>
+  <a href="https://github.com/kandizzy/possible-futures">github&nbsp;→</a>
+</header>
 
 <div class="reveal">
   <div class="slides">
@@ -238,7 +468,7 @@ npm run dev</code></pre>
         </div><div class="slide-main">
           <h1>The <em>ritual.</em></h1>
           <p class="sub">30 minutes, your last few roles in front of you, and the promise that you're writing this yourself.</p>
-        <img class="screenshot" src="screenshots/01-begin.png" alt="The ritual gate">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/01-begin.png" alt="The ritual gate">
         </div></div>
     </section>
 
@@ -248,7 +478,7 @@ npm run dev</code></pre>
         <h3>I</h3></div><div class="slide-main">
           <h1>The <em>setup.</em></h1>
           <p class="sub">Name, education, and the through-line that connects your work.</p>
-        <img class="screenshot" src="screenshots/04-ch1-filled.png" alt="Chapter 1 filled in">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/04-ch1-filled.png" alt="Chapter 1 filled in">
         </div></div>
     </section>
 
@@ -258,7 +488,7 @@ npm run dev</code></pre>
         <h3>II</h3></div><div class="slide-main">
           <h1>The <em>throughline.</em></h1>
           <p class="sub">Two or more roles. Title, company, dates, summary, proudest moment. Messy notes welcome.</p>
-        <img class="screenshot" src="screenshots/06-ch2-filled.png" alt="Three roles entered">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/06-ch2-filled.png" alt="Three roles entered">
         </div></div>
     </section>
 
@@ -268,7 +498,7 @@ npm run dev</code></pre>
         <h3>III</h3></div><div class="slide-main">
           <h1>What you're <em>looking for.</em></h1>
           <p class="sub">Three Horizons of role fit, target companies, signal words, compensation floor.</p>
-        <img class="screenshot" src="screenshots/08-ch3-filled.png" alt="Chapter 3 — Three Horizons of role fit, signal words, and constraints">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/08-ch3-filled.png" alt="Chapter 3 — Three Horizons of role fit, signal words, and constraints">
         </div></div>
     </section>
 
@@ -278,7 +508,7 @@ npm run dev</code></pre>
         <h3>IV</h3></div><div class="slide-main">
           <h1>The <em>playbook.</em></h1>
           <p class="sub">Red flags, banned words, voice calibration. Click phrases that sound like you, or paste your own.</p>
-        <img class="screenshot" src="screenshots/10-ch4-filled.png" alt="Playbook started">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/10-ch4-filled.png" alt="Playbook started">
         </div></div>
     </section>
 
@@ -288,7 +518,7 @@ npm run dev</code></pre>
         <h3>V</h3></div><div class="slide-main">
           <h1>The shelf <em>of proof.</em></h1>
           <p class="sub">Projects, recognition, and resume versions. Add or remove versions as needed.</p>
-        <img class="screenshot" src="screenshots/12-ch5-filled.png" alt="Three projects">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/12-ch5-filled.png" alt="Three projects">
         </div></div>
     </section>
 
@@ -298,7 +528,7 @@ npm run dev</code></pre>
         <h3>V</h3></div><div class="slide-main">
           <h1>Resume <em>versions.</em></h1>
           <p class="sub">Different roles call for different resumes. Name them, describe their emphasis.</p>
-        <img class="screenshot" src="screenshots/13-ch5-versions.png" alt="Resume versions">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/13-ch5-versions.png" alt="Resume versions">
         </div></div>
     </section>
 
@@ -308,7 +538,7 @@ npm run dev</code></pre>
         </div><div class="slide-main">
           <h1>Press the <em>plates.</em></h1>
           <p class="sub">Preview your Book, Compass, and Playbook in rendered markdown or source view.</p>
-        <img class="screenshot" src="screenshots/14-publish-preview.png" alt="Publish preview">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/14-publish-preview.png" alt="Publish preview">
         </div></div>
     </section>
 
@@ -318,7 +548,7 @@ npm run dev</code></pre>
         </div><div class="slide-main">
           <h1>The <em>compass.</em></h1>
           <p class="sub">Your scoring rubric. Signal words, red flags, role tiers. Every posting is evaluated against this.</p>
-        <img class="screenshot" src="screenshots/15-publish-compass.png" alt="Compass preview">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/15-publish-compass.png" alt="Compass preview">
         </div></div>
     </section>
 
@@ -328,7 +558,7 @@ npm run dev</code></pre>
         </div><div class="slide-main">
           <h1>It's <em>ready.</em></h1>
           <p class="sub">Three markdown files saved. The app is primed.</p>
-        <img class="screenshot" src="screenshots/17-publish-done.png" alt="Published">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/17-publish-done.png" alt="Published">
         </div></div>
     </section>
 
@@ -338,7 +568,7 @@ npm run dev</code></pre>
         </div><div class="slide-main">
           <h1>An index of <em>possible futures.</em></h1>
           <p class="sub">Every role scored against your compass, with status tracking across your pipeline.</p>
-        <img class="screenshot" src="screenshots/18-dashboard.png" alt="Dashboard">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/18-dashboard.png" alt="Dashboard">
         </div></div>
     </section>
 
@@ -348,7 +578,7 @@ npm run dev</code></pre>
         </div><div class="slide-main">
           <h1>The scoring <em>breakdown.</em></h1>
           <p class="sub">Six dimensions, fit summary, signal words, gap analysis. Calibrate scores you disagree with.</p>
-        <img class="screenshot" src="screenshots/19-role-detail.png" alt="Role detail">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/19-role-detail.png" alt="Role detail">
         </div></div>
     </section>
 
@@ -374,7 +604,7 @@ npm run dev</code></pre>
         </div><div class="slide-main">
           <h1>Score a <em>posting.</em></h1>
           <p class="sub">Paste a job posting or fetch by URL. Scored in 15-30 seconds.</p>
-        <img class="screenshot" src="screenshots/20-evaluate.png" alt="Evaluate a role">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/20-evaluate.png" alt="Evaluate a role">
         </div></div>
     </section>
 
@@ -384,7 +614,7 @@ npm run dev</code></pre>
         </div><div class="slide-main">
           <h1>Find the <em>next houses.</em></h1>
           <p class="sub">Claude suggests companies. Each is verified live against its ATS. Track or skip.</p>
-        <img class="screenshot" src="screenshots/21-discover.png" alt="Discover companies">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/21-discover.png" alt="Discover companies">
         </div></div>
     </section>
 
@@ -394,7 +624,7 @@ npm run dev</code></pre>
         </div><div class="slide-main">
           <h1>The <em>houses.</em></h1>
           <p class="sub">Pipeline view per company. Active roles sorted by urgency, watchlist by category.</p>
-        <img class="screenshot" src="screenshots/22-companies.png" alt="Companies page">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/22-companies.png" alt="Companies page">
         </div></div>
     </section>
 
@@ -405,7 +635,7 @@ npm run dev</code></pre>
           <h1>The <em>ledger.</em></h1>
           <p class="sub">Every API call, its cost, and what it was for. Export to CSV.</p>
           <p class="sub" style="color: var(--stamp); font-style: italic;">Work in progress. Cost estimates are computed from token counts — they haven't been reconciled against actual Anthropic billing yet. Treat as directional.</p>
-        <img class="screenshot" src="screenshots/23-ledger.png" alt="Ledger">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/23-ledger.png" alt="Ledger">
         </div></div>
     </section>
 
@@ -435,7 +665,7 @@ npm run dev</code></pre>
         </div><div class="slide-main">
           <h1><em>Settings.</em></h1>
           <p class="sub">Choose your AI backend, tune signal words, reload source files, and access Revise.</p>
-        <img class="screenshot" src="screenshots/24-settings.png" alt="Settings">
+        <img class="screenshot" loading="lazy" decoding="async" src="screenshots/24-settings.png" alt="Settings">
         </div></div>
     </section>
 
@@ -481,22 +711,67 @@ npm run dev</code></pre>
   </div>
 </div>
 
+<dialog id="zoom" aria-label="Zoomed screenshot">
+  <form method="dialog" class="zoom-close-form">
+    <button class="zoom-close" aria-label="Close" autofocus>&times;</button>
+  </form>
+  <div class="zoom-scroll">
+    <img alt="">
+  </div>
+</dialog>
+
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.min.js"></script>
 <script>
-  Reveal.initialize({
-    hash: true,
-    transition: 'none',
-    backgroundTransition: 'none',
-    slideNumber: function () {
-      const h = String(Reveal.getIndices().h + 1).padStart(2, '0');
-      const total = String(Reveal.getTotalSlides()).padStart(2, '0');
-      return [h + '\u00A0of\u00A0' + total];
-    },
-    width: 1100,
-    height: 700,
-    margin: 0.06,
-    center: true,
-  });
+  (function () {
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+    if (isMobile) {
+      document.body.classList.add('mobile-stack');
+      initZoom();
+    } else {
+      Reveal.initialize({
+        hash: true,
+        transition: 'none',
+        backgroundTransition: 'none',
+        slideNumber: function () {
+          const h = String(Reveal.getIndices().h + 1).padStart(2, '0');
+          const total = String(Reveal.getTotalSlides()).padStart(2, '0');
+          return [h + '\u00A0of\u00A0' + total];
+        },
+        width: 1100,
+        height: 700,
+        margin: 0.06,
+        center: true,
+      });
+    }
+  })();
+
+  function initZoom() {
+    const dialog = document.getElementById('zoom');
+    if (!dialog || typeof dialog.showModal !== 'function') return;
+    const zoomImg = dialog.querySelector('img');
+    const closeBtn = dialog.querySelector('.zoom-close');
+
+    document.querySelectorAll('img.screenshot').forEach(function (img) {
+      img.addEventListener('click', function () {
+        zoomImg.src = img.src;
+        zoomImg.alt = img.alt || '';
+        dialog.showModal();
+      });
+    });
+
+    dialog.addEventListener('click', function (e) {
+      // Backdrop click \u2014 anything outside the image / close button
+      if (e.target === dialog || e.target.classList.contains('zoom-scroll')) {
+        dialog.close();
+      }
+    });
+    closeBtn.addEventListener('click', function () { dialog.close(); });
+    dialog.addEventListener('close', function () {
+      // Free the high-res image so memory isn't pinned between opens
+      zoomImg.removeAttribute('src');
+    });
+  }
 </script>
 </body>
 </html>
