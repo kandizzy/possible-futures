@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getRoleById } from '@/lib/queries/roles';
-import { getApplicationByRoleId } from '@/lib/queries/applications';
+import { getApplicationByRoleId, getApplicationEvents } from '@/lib/queries/applications';
 import { getCalibrationsByRole } from '@/lib/queries/calibrations';
 import { getPeopleByCompanyName } from '@/lib/queries/people';
 import { getVersionLabelMap } from '@/lib/queries/source-files';
@@ -40,6 +40,7 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
   const VERSION_LABELS = getVersionLabelMap();
   const dims: Dimension[] = ['want', 'can', 'grow', 'pay', 'team', 'impact'];
   const application = getApplicationByRoleId(role.id);
+  const appEvents = application ? getApplicationEvents(application.id) : [];
   const hasMaterials = application?.cover_letter_generated === true;
   const dateLocale = getDateFormat();
 
@@ -132,7 +133,7 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
                   />
                 </MetaRow>
                 <MetaRow label="Status">
-                  <StatusSelect roleId={role.id} currentStatus={role.status} />
+                  <StatusSelect roleId={role.id} currentStatus={role.status} withNote />
                 </MetaRow>
                 {role.recommended_resume_version && (
                   <MetaRow label="Resume version">
@@ -332,6 +333,37 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
                 </li>
               );
             })}
+          </ol>
+        </Section>
+      )}
+
+      {/* Application timeline — status changes, oldest first */}
+      {appEvents.length > 0 && (
+        <Section label={`Application timeline · ${appEvents.length}`}>
+          <ol className="divide-y divide-rule-soft border-t border-b border-rule-soft">
+            {appEvents.map((ev) => (
+              <li key={ev.id} className="py-3 flex flex-col gap-1">
+                <div className="flex items-baseline justify-between gap-4">
+                  <span
+                    className="font-serif text-[14px] text-ink"
+                    style={{ fontVariationSettings: '"opsz" 14, "SOFT" 40' }}
+                  >
+                    {ev.status}
+                  </span>
+                  <span className="font-mono tabular text-[10px] text-ink-3 shrink-0">
+                    {formatDate(ev.created_at, dateLocale)}
+                  </span>
+                </div>
+                {ev.note && (
+                  <p
+                    className="font-serif italic text-[13px] text-ink-2 whitespace-pre-line"
+                    style={{ fontVariationSettings: '"opsz" 13, "SOFT" 40' }}
+                  >
+                    {ev.note}
+                  </p>
+                )}
+              </li>
+            ))}
           </ol>
         </Section>
       )}

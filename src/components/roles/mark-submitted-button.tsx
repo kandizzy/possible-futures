@@ -20,23 +20,38 @@ export function MarkSubmittedButton({
   // the button would flip back to "Mark as submitted" after the action.
   const [localSubmitted, setLocalSubmitted] = useState(isSubmitted);
   const [localDate, setLocalDate] = useState<string | null>(dateApplied ?? null);
+  // Submitting opens a note panel first — it's an interview-space change, so
+  // it can carry a journey note. Reverting is a correction and stays a click.
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [note, setNote] = useState('');
 
-  function handle(action: 'submit' | 'revert') {
+  function submit() {
     setError('');
     startTransition(async () => {
       const fd = new FormData();
       fd.set('role_id', String(roleId));
-      const result = action === 'submit'
-        ? await markApplicationSubmitted(fd)
-        : await unmarkApplicationSubmitted(fd);
+      if (note.trim()) fd.set('note', note.trim());
+      const result = await markApplicationSubmitted(fd);
       if (result.success) {
-        if (action === 'submit') {
-          setLocalSubmitted(true);
-          setLocalDate(new Date().toISOString().split('T')[0]);
-        } else {
-          setLocalSubmitted(false);
-          setLocalDate(null);
-        }
+        setLocalSubmitted(true);
+        setLocalDate(new Date().toISOString().split('T')[0]);
+        setNoteOpen(false);
+        setNote('');
+      } else {
+        setError(result.error ?? 'Could not update.');
+      }
+    });
+  }
+
+  function revert() {
+    setError('');
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set('role_id', String(roleId));
+      const result = await unmarkApplicationSubmitted(fd);
+      if (result.success) {
+        setLocalSubmitted(false);
+        setLocalDate(null);
       } else {
         setError(result.error ?? 'Could not update.');
       }
@@ -54,7 +69,7 @@ export function MarkSubmittedButton({
         </span>
         <button
           type="button"
-          onClick={() => handle('revert')}
+          onClick={revert}
           disabled={isPending}
           className="font-serif italic text-[11px] text-ink-3 hover:text-stamp transition-colors disabled:opacity-50"
           style={{ fontVariationSettings: '"opsz" 11, "SOFT" 40' }}
@@ -68,15 +83,57 @@ export function MarkSubmittedButton({
     );
   }
 
+  if (noteOpen) {
+    return (
+      <div className="flex flex-col gap-2 w-full max-w-sm">
+        <div className="smallcaps text-[9px] text-ink-3">Marking as submitted</div>
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Add a note for this change — optional"
+          rows={3}
+          autoFocus
+          disabled={isPending}
+          className="field w-full font-serif text-[13px] leading-[1.6] resize-y"
+          style={{ fontVariationSettings: '"opsz" 13, "SOFT" 30' }}
+        />
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={submit}
+            disabled={isPending}
+            className="btn-stamp text-[12px]"
+          >
+            {isPending ? 'Marking…' : 'Mark as submitted'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setNoteOpen(false);
+              setNote('');
+            }}
+            disabled={isPending}
+            className="btn-link text-[12px]"
+          >
+            cancel
+          </button>
+        </div>
+        {error && (
+          <span className="font-serif italic text-[11px] text-stamp">{error}</span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center gap-1">
       <button
         type="button"
-        onClick={() => handle('submit')}
+        onClick={() => setNoteOpen(true)}
         disabled={isPending}
         className="btn-ghost disabled:opacity-50"
       >
-        {isPending ? 'Marking…' : 'Mark as submitted'}
+        Mark as submitted
       </button>
       {error && (
         <span className="font-serif italic text-[11px] text-stamp">{error}</span>

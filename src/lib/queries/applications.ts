@@ -1,5 +1,5 @@
 import { getDb } from '../db';
-import type { Application, ResumeVersion } from '../types';
+import type { Application, ApplicationEvent, ResumeVersion } from '../types';
 
 export function getAllApplications(): (Application & { role_title: string; role_company: string })[] {
   const db = getDb();
@@ -135,4 +135,28 @@ export function upsertApplicationForRole(roleId: number): number {
   if (existing) return existing.id;
   const result = db.prepare('INSERT INTO applications (role_id) VALUES (?)').run(roleId);
   return result.lastInsertRowid as number;
+}
+
+// --- Status-change history --------------------------------------------------
+
+export function insertApplicationEvent(data: {
+  application_id: number;
+  status: string;
+  note?: string | null;
+}): number {
+  const db = getDb();
+  const result = db
+    .prepare('INSERT INTO application_events (application_id, status, note) VALUES (?, ?, ?)')
+    .run(data.application_id, data.status, data.note ?? null);
+  return result.lastInsertRowid as number;
+}
+
+// Oldest-first — the timeline reads top-to-bottom as the application's journey.
+export function getApplicationEvents(applicationId: number): ApplicationEvent[] {
+  const db = getDb();
+  return db
+    .prepare(
+      'SELECT * FROM application_events WHERE application_id = ? ORDER BY created_at ASC, id ASC',
+    )
+    .all(applicationId) as ApplicationEvent[];
 }

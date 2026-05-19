@@ -87,6 +87,10 @@ export async function overrideRecommendation(formData: FormData): Promise<{ succ
 export async function updateStatus(formData: FormData): Promise<{ success: boolean; error?: string }> {
   const roleId = Number(formData.get('role_id'));
   const status = formData.get('status') as string;
+  // Optional note — only meaningful for statuses that land on the
+  // application timeline (Applied / Interviewing / Offer / Rejected /
+  // Withdrawn). Ignored for New / Ghosted / Skipped.
+  const note = (formData.get('note') as string)?.trim();
   if (!roleId || !status) return { success: false, error: 'Missing fields.' };
   if (!VALID_STATUSES.has(status)) return { success: false, error: 'Invalid status.' };
 
@@ -108,7 +112,9 @@ export async function updateStatus(formData: FormData): Promise<{ success: boole
   };
   const newAppStatus = ROLE_TO_APP_STATUS[status];
   if (newAppStatus) {
-    const { upsertApplicationForRole } = await import('@/lib/queries/applications');
+    const { upsertApplicationForRole, insertApplicationEvent } = await import(
+      '@/lib/queries/applications'
+    );
     const { getDb } = await import('@/lib/db');
     const appId = upsertApplicationForRole(roleId);
     const db = getDb();
@@ -120,6 +126,10 @@ export async function updateStatus(formData: FormData): Promise<{ success: boole
            date_applied = COALESCE(date_applied, ?)
        WHERE id = ?`,
     ).run(newAppStatus, today, appId);
+    // Record the synced change on the timeline so a status set via the role's
+    // StatusSelect still shows up in the application's history — with the
+    // note when one was given.
+    insertApplicationEvent({ application_id: appId, status: newAppStatus, note: note || null });
     revalidatePath('/applications');
   }
 

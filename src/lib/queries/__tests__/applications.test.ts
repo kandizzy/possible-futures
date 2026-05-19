@@ -8,6 +8,8 @@ import {
   updateApplicationNotes,
   updateApplicationMaterials,
   upsertApplicationForRole,
+  insertApplicationEvent,
+  getApplicationEvents,
 } from '@/lib/queries/applications';
 import { insertRole } from '@/lib/queries/roles';
 import { makeAiScores } from '@/test/db-helper';
@@ -165,5 +167,42 @@ describe('upsertApplicationForRole', () => {
     const first = insertApplication({ role_id: roleId });
     const second = upsertApplicationForRole(roleId);
     expect(second).toBe(first);
+  });
+});
+
+describe('application events', () => {
+  it('records an event with a note and reads it back', () => {
+    const roleId = insertTestRole();
+    const appId = insertApplication({ role_id: roleId });
+    insertApplicationEvent({ application_id: appId, status: 'Phone Screen', note: 'recruiter called' });
+    const events = getApplicationEvents(appId);
+    expect(events).toHaveLength(1);
+    expect(events[0].status).toBe('Phone Screen');
+    expect(events[0].note).toBe('recruiter called');
+    expect(events[0].created_at).toBeTruthy();
+  });
+
+  it('defaults note to null when omitted', () => {
+    const roleId = insertTestRole();
+    const appId = insertApplication({ role_id: roleId });
+    insertApplicationEvent({ application_id: appId, status: 'Submitted' });
+    expect(getApplicationEvents(appId)[0].note).toBeNull();
+  });
+
+  it('returns events oldest-first', () => {
+    const roleId = insertTestRole();
+    const appId = insertApplication({ role_id: roleId });
+    insertApplicationEvent({ application_id: appId, status: 'Submitted' });
+    insertApplicationEvent({ application_id: appId, status: 'Phone Screen' });
+    insertApplicationEvent({ application_id: appId, status: 'Rejected', note: 'tough call' });
+    const events = getApplicationEvents(appId);
+    expect(events.map((e) => e.status)).toEqual(['Submitted', 'Phone Screen', 'Rejected']);
+  });
+
+  it('scopes events to one application', () => {
+    const appA = insertApplication({ role_id: insertTestRole() });
+    const appB = insertApplication({ role_id: insertTestRole() });
+    insertApplicationEvent({ application_id: appA, status: 'Submitted' });
+    expect(getApplicationEvents(appB)).toHaveLength(0);
   });
 });

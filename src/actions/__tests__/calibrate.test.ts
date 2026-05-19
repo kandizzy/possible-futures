@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { overrideScore, overrideRecommendation, updateStatus, updateNotes } from '@/actions/calibrate';
 import { insertRole, getRoleById } from '@/lib/queries/roles';
 import { getCalibrationsByRole } from '@/lib/queries/calibrations';
+import { getApplicationByRoleId, getApplicationEvents } from '@/lib/queries/applications';
 import { makeAiScores } from '@/test/db-helper';
 
 function makeFormData(entries: Record<string, string>): FormData {
@@ -145,6 +146,18 @@ describe('updateStatus', () => {
       const res = await updateStatus(makeFormData({ role_id: String(roleId), status }));
       expect(res.success).toBe(true);
     }
+  });
+
+  it('records the note on the application timeline for an interview-space status', async () => {
+    const roleId = insertTestRole();
+    await updateStatus(
+      makeFormData({ role_id: String(roleId), status: 'Interviewing', note: 'phone screen booked' }),
+    );
+    const app = getApplicationByRoleId(roleId)!;
+    const events = getApplicationEvents(app.id);
+    const last = events[events.length - 1];
+    expect(last.status).toBe('Interview');
+    expect(last.note).toBe('phone screen booked');
   });
 });
 

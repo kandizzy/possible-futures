@@ -1,10 +1,11 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { changeApplicationStatus } from '@/actions/applications';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Application } from '@/lib/types';
+import { isUnusualTransition, unusualTransitionReason } from '@/lib/status-order';
 import { EmptyState } from '@/components/layout/editorial';
 import { Select } from '@/components/layout/select';
 
@@ -36,13 +37,33 @@ function getAppStatusStyle(status: string): string {
 function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  // Picking a new status doesn't commit immediately — it opens a note panel
+  // so the change can carry a record (e.g. what a recruiter said). The note
+  // is optional; the status only commits on Save.
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [note, setNote] = useState('');
 
-  function handleStatusChange(newStatus: string) {
+  function handleStatusPick(newStatus: string) {
+    if (newStatus === app.current_status) return;
+    setNote('');
+    setPendingStatus(newStatus);
+  }
+
+  function cancelChange() {
+    setPendingStatus(null);
+    setNote('');
+  }
+
+  function commitChange() {
+    if (!pendingStatus) return;
     startTransition(async () => {
       const formData = new FormData();
       formData.set('app_id', String(app.id));
-      formData.set('status', newStatus);
+      formData.set('status', pendingStatus);
+      if (note.trim()) formData.set('note', note.trim());
       await changeApplicationStatus(formData);
+      setPendingStatus(null);
+      setNote('');
       router.refresh();
     });
   }
@@ -85,7 +106,7 @@ function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
         <Select
           variant="inline"
           value={app.current_status}
-          onChange={handleStatusChange}
+          onChange={handleStatusPick}
           disabled={isPending}
           aria-label={`Status for ${app.role_title} at ${app.role_company}`}
           className={`font-serif text-[14px] text-right hover:text-stamp transition-colors min-w-[8rem] ${getAppStatusStyle(app.current_status)}`}
@@ -103,7 +124,7 @@ function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
           <Select
             variant="inline"
             value={app.current_status}
-            onChange={handleStatusChange}
+            onChange={handleStatusPick}
             disabled={isPending}
             aria-label={`Status for ${app.role_title}`}
             className={`font-serif text-[13px] text-right hover:text-stamp transition-colors ${getAppStatusStyle(app.current_status)}`}
@@ -135,6 +156,57 @@ function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
           </p>
         )}
       </div>
+
+      {/* Note panel — revealed after a new status is picked, before commit */}
+      {pendingStatus && (
+        <div
+          className={`mt-4 border-t pt-4 ${
+            isUnusualTransition(app.current_status, pendingStatus)
+              ? 'border-stamp/40'
+              : 'border-rule-soft'
+          }`}
+        >
+          <div className="smallcaps text-[9px] text-ink-3 mb-2">
+            {app.current_status.toLowerCase()} → {pendingStatus.toLowerCase()}
+          </div>
+          {isUnusualTransition(app.current_status, pendingStatus) && (
+            <p
+              className="mb-2 font-serif italic text-[12px] text-stamp leading-snug"
+              style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
+            >
+              {unusualTransitionReason(app.current_status, pendingStatus)} Confirm to continue.
+            </p>
+          )}
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Add a note for this change — optional"
+            rows={3}
+            autoFocus
+            disabled={isPending}
+            className="field w-full font-serif text-[13px] leading-[1.6] resize-y"
+            style={{ fontVariationSettings: '"opsz" 13, "SOFT" 30' }}
+          />
+          <div className="mt-2 flex items-center gap-4">
+            <button
+              type="button"
+              onClick={commitChange}
+              disabled={isPending}
+              className="btn-stamp text-[12px]"
+            >
+              {isPending ? 'Saving' : 'Save change'}
+            </button>
+            <button
+              type="button"
+              onClick={cancelChange}
+              disabled={isPending}
+              className="btn-link text-[12px]"
+            >
+              cancel
+            </button>
+          </div>
+        </div>
+      )}
     </li>
   );
 }

@@ -43,6 +43,17 @@ CREATE TABLE IF NOT EXISTS applications (
   notes TEXT
 );
 
+-- One row per application status change. Mirrors the calibrations table:
+-- an append-only event log with an optional human note and a timestamp,
+-- so an application's journey (Submitted -> Phone Screen -> ...) is kept.
+CREATE TABLE IF NOT EXISTS application_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  application_id INTEGER NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+  status TEXT NOT NULL,
+  note TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS calibrations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,

@@ -96,6 +96,15 @@ export interface Application {
   notes: string | null;
 }
 
+// One status change in an application's history. Append-only.
+export interface ApplicationEvent {
+  id: number;
+  application_id: number;
+  status: string;
+  note: string | null;
+  created_at: string;
+}
+
 export interface Calibration {
   id: number;
   role_id: number;

@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { insertApplication, updateApplicationStatus, updateApplicationNotes, getApplicationByRoleId, upsertApplicationForRole } from '@/lib/queries/applications';
+import { insertApplication, updateApplicationStatus, updateApplicationNotes, getApplicationByRoleId, upsertApplicationForRole, insertApplicationEvent } from '@/lib/queries/applications';
 import { updateRoleStatus, getRoleById } from '@/lib/queries/roles';
 import { getDb } from '@/lib/db';
 import type { ResumeVersion, RoleStatus } from '@/lib/types';
@@ -31,13 +31,15 @@ export async function createApplication(formData: FormData): Promise<{ success: 
 
   if (!roleId) return { success: false, error: 'Role ID required.' };
 
-  insertApplication({
+  const appId = insertApplication({
     role_id: roleId,
     resume_version_used: resumeVersion || undefined,
     date_applied: dateApplied,
     current_status: 'Submitted',
     notes: notes || undefined,
   });
+  // Seed the status timeline with the application's first state.
+  insertApplicationEvent({ application_id: appId, status: 'Submitted' });
 
   // Also update role status
   updateRoleStatus(roleId, 'Applied');
@@ -52,6 +54,9 @@ export async function changeApplicationStatus(formData: FormData): Promise<{ suc
   const appId = Number(formData.get('app_id'));
   const status = formData.get('status') as string;
   const nextSteps = (formData.get('next_steps') as string)?.trim();
+  // Optional human note attached to this specific status change — recorded
+  // on the timeline event, distinct from the application's next_steps field.
+  const note = (formData.get('note') as string)?.trim();
 
   if (!appId || !status) {
     return { success: false, error: 'Application ID and status are required.' };
@@ -63,6 +68,7 @@ export async function changeApplicationStatus(formData: FormData): Promise<{ suc
 
   try {
     updateApplicationStatus(appId, status, nextSteps || undefined);
+    insertApplicationEvent({ application_id: appId, status, note: note || null });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return { success: false, error: `Failed to update status: ${message}` };
@@ -86,6 +92,7 @@ export async function changeApplicationStatus(formData: FormData): Promise<{ suc
 
 export async function markApplicationSubmitted(formData: FormData): Promise<{ success: boolean; error?: string }> {
   const roleId = Number(formData.get('role_id'));
+  const note = (formData.get('note') as string)?.trim();
   if (!roleId || !Number.isInteger(roleId)) {
     return { success: false, error: 'Role id is required.' };
   }
@@ -99,6 +106,7 @@ export async function markApplicationSubmitted(formData: FormData): Promise<{ su
   db.prepare(
     "UPDATE applications SET current_status = 'Submitted', date_applied = ? WHERE id = ?",
   ).run(today, appId);
+  insertApplicationEvent({ application_id: appId, status: 'Submitted', note: note || null });
   updateRoleStatus(roleId, 'Applied');
 
   revalidatePath('/');
@@ -120,6 +128,7 @@ export async function unmarkApplicationSubmitted(formData: FormData): Promise<{ 
   db.prepare(
     "UPDATE applications SET current_status = 'Draft', date_applied = NULL WHERE id = ?",
   ).run(app.id);
+  insertApplicationEvent({ application_id: app.id, status: 'Draft' });
 
   revalidatePath('/');
   revalidatePath('/applications');

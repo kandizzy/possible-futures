@@ -334,6 +334,31 @@ function migrate(db: Database.Database): void {
     db.exec("UPDATE source_files SET filename = 'PROJECT_BOOK' WHERE filename = 'PROJECT_BIBLE'");
   }
 
+  // Migration: application_events — append-only status-change log per
+  // application. Existing DBs predate it; create idempotently, then
+  // backfill one seed event per non-Draft application that has none, so
+  // every already-tracked application has a timeline starting point.
+  // date_applied is used as the seed timestamp when available.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS application_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      application_id INTEGER NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+      status TEXT NOT NULL,
+      note TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec(`
+    INSERT INTO application_events (application_id, status, created_at)
+    SELECT a.id, a.current_status, COALESCE(a.date_applied, datetime('now'))
+    FROM applications a
+    WHERE a.current_status IS NOT NULL
+      AND a.current_status != 'Draft'
+      AND NOT EXISTS (
+        SELECT 1 FROM application_events e WHERE e.application_id = a.id
+      )
+  `);
+
   // Migration: meta table for app/schema version tracking and dismissable
   // flags. Existing DBs predate the table; create it idempotently and seed
   // data_schema_version=1 for any DB that was running before v0.2.0.
