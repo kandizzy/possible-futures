@@ -5,7 +5,7 @@ import { getApplicationByRoleId } from '@/lib/queries/applications';
 import { getCalibrationsByRole } from '@/lib/queries/calibrations';
 import { getPeopleByCompanyName } from '@/lib/queries/people';
 import { getVersionLabelMap } from '@/lib/queries/source-files';
-import { getTotalScore, getScoreColor } from '@/lib/types';
+import { getTotalScore, getEffectiveScores } from '@/lib/types';
 import type { Dimension } from '@/lib/types';
 import { ScoreOverride } from '@/components/roles/score-override';
 import { RecommendationOverride } from '@/components/roles/recommendation-override';
@@ -14,7 +14,7 @@ import { NotesEditor } from '@/components/roles/notes-editor';
 import { GapAnalysis } from '@/components/roles/gap-analysis';
 import { MarkReviewedButton } from '@/components/discovery/mark-reviewed-button';
 import { RoleHeaderEditor, EditDetailsTrigger } from '@/components/roles/role-header-editor';
-import { ScoreRadar } from '@/components/roles/score-radar';
+import { ScorePanel } from '@/components/roles/score-panel';
 import { DeleteRoleButton } from '@/components/roles/delete-role-button';
 import { ArchiveRoleButton } from '@/components/roles/archive-role-button';
 import { RestoreRoleButton } from '@/components/roles/restore-role-button';
@@ -29,12 +29,16 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
   if (!role) notFound();
 
   const total = getTotalScore(role.ai_scores);
-  const myTotal = role.my_scores ? getTotalScore(role.my_scores) : null;
+  // Effective scores merge any calibrations over the AI scores. The radar and
+  // the "Your calibration" total both read from this so a calibration is
+  // reflected, not lost (my_scores alone is partial — only adjusted dims).
+  const effectiveScores = getEffectiveScores(role.ai_scores, role.my_scores);
+  const hasCalibration = role.my_scores != null && Object.keys(role.my_scores).length > 0;
+  const myTotal = hasCalibration ? getTotalScore(effectiveScores) : null;
   const calibrations = getCalibrationsByRole(role.id);
   const contacts = getPeopleByCompanyName(role.company);
   const VERSION_LABELS = getVersionLabelMap();
   const dims: Dimension[] = ['want', 'can', 'grow', 'pay', 'team', 'impact'];
-  const scoreCls = getScoreColor(total);
   const application = getApplicationByRoleId(role.id);
   const hasMaterials = application?.cover_letter_generated === true;
   const dateLocale = getDateFormat();
@@ -166,32 +170,13 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
               </div>
             </div>
 
-            <div className="flex flex-col items-center shrink-0 self-center md:self-start order-first md:order-none">
-              <ScoreRadar
-                scores={role.ai_scores}
-                className="w-[240px] h-[240px]"
-                ariaLabel={`Score radar for ${role.company}: ${total} of 18`}
-              />
-              <div className="mt-3 flex items-baseline gap-1">
-                <span
-                  className={`font-serif tabular text-[64px] leading-none ${scoreCls} tracking-tight`}
-                  style={{ fontVariationSettings: '"opsz" 144, "SOFT" 40' }}
-                >
-                  {total}
-                </span>
-                <span className="font-mono text-[12px] text-ink-3">/18</span>
-              </div>
-              <div className="smallcaps text-[9px] text-ink-3 mt-1">Total score</div>
-              {myTotal !== null && myTotal !== total && (
-                <div
-                  className="mt-3 font-serif italic text-[13px] text-ink-2"
-                  style={{ fontVariationSettings: '"opsz" 13, "SOFT" 40' }}
-                >
-                  Your calibration:{' '}
-                  <span className="not-italic font-mono tabular text-ink">{myTotal}</span>
-                </div>
-              )}
-            </div>
+            <ScorePanel
+              company={role.company}
+              aiScores={role.ai_scores}
+              effectiveScores={effectiveScores}
+              aiTotal={total}
+              calibratedTotal={myTotal}
+            />
           </div>
         </RoleHeaderEditor>
       </header>

@@ -345,6 +345,24 @@ export function getTotalScore(scores: AiScores | MyScores): number {
   }, 0);
 }
 
+// A calibration (my_scores) overrides the AI's score per-dimension. my_scores
+// is partial — it only holds the dimensions the user actually adjusted.
+// getEffectiveScores merges the two into a full record: the calibrated value
+// where one exists, the AI score otherwise. This is the "true" picture — what
+// the radar should draw and what the calibrated total should sum.
+export function getEffectiveScores(
+  ai: AiScores,
+  my: MyScores | null,
+): Record<Dimension, number> {
+  const dims: Dimension[] = ['want', 'can', 'grow', 'pay', 'team', 'impact'];
+  const out = {} as Record<Dimension, number>;
+  for (const d of dims) {
+    const override = my?.[d];
+    out[d] = override === undefined || override === null ? ai[d].score : override;
+  }
+  return out;
+}
+
 export function getScoreColor(total: number): string {
   if (total >= 15) return 'text-stamp';
   if (total >= 12) return 'text-ink';

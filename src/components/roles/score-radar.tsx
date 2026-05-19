@@ -44,8 +44,16 @@ function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3);
 }
 
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
 type RadarProps = {
   scores: AiScores | MyScores;
+  // When provided, drawn as a faint dashed polygon behind the main shape —
+  // used on the role detail radar to show the AI's original scores beneath
+  // the user's calibrated shape.
+  baselineScores?: AiScores | MyScores;
   className?: string;
   ariaLabel?: string;
 };
@@ -93,29 +101,38 @@ export function ScoreRadarMini({ scores, className, ariaLabel }: RadarProps) {
 const STAGGER_MS = 120;
 const VERTEX_DUR_MS = 500;
 
+// Duration of the all-vertices-together morph when `scores` changes after
+// mount — used by the AI/calibration toggle on the role detail radar.
+const MORPH_MS = 480;
+
 // Full version for the role detail header — rings, spokes, ticks, labels,
 // vertex dots. Animates the polygon and dots from center outward, one
 // vertex at a time, on every mount/scores-change. prefers-reduced-motion
 // snaps straight to the final state.
-export function ScoreRadar({ scores, className, ariaLabel }: RadarProps) {
+export function ScoreRadar({ scores, baselineScores, className, ariaLabel }: RadarProps) {
   const total = getTotalScore(scores);
   const color = radarColor(total);
   const R = 78, CX = 120, CY = 120;
 
   const polygonRef = useRef<SVGPolygonElement>(null);
   const dotRefs = useRef<(SVGCircleElement | null)[]>([]);
+  // Score values currently drawn — lets a morph start from wherever the
+  // polygon actually is, rather than snapping.
+  const displayedRef = useRef<number[]>(RADAR_DIMS.map(() => 0));
+  const firstRunRef = useRef(true);
 
   useEffect(() => {
     const reduced =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    function paint(progressByDim: number[]) {
+    const target = RADAR_DIMS.map((d) => extractScore(scores, d));
+
+    // Place vertices + dots at the given absolute score values.
+    function paintScores(vals: number[]) {
       const ptsArr: string[] = [];
-      RADAR_DIMS.forEach((d, i) => {
-        const target = extractScore(scores, d);
-        const score = target * progressByDim[i];
-        const [x, y] = radarPoint(i, score, R, CX, CY);
+      RADAR_DIMS.forEach((_, i) => {
+        const [x, y] = radarPoint(i, vals[i], R, CX, CY);
         ptsArr.push(`${x.toFixed(2)},${y.toFixed(2)}`);
         const dot = dotRefs.current[i];
         if (dot) {
@@ -124,33 +141,48 @@ export function ScoreRadar({ scores, className, ariaLabel }: RadarProps) {
         }
       });
       if (polygonRef.current) polygonRef.current.setAttribute('points', ptsArr.join(' '));
+      displayedRef.current = vals;
     }
 
     if (reduced) {
-      paint(RADAR_DIMS.map(() => 1));
+      paintScores(target);
+      firstRunRef.current = false;
       return;
     }
 
-    // Start collapsed at center (progress = 0 for every vertex), then run
-    // a single rAF loop that advances each vertex on its own staggered
-    // timeline.
-    paint(RADAR_DIMS.map(() => 0));
-
     const start = performance.now();
     let raf = 0;
-    const tick = () => {
-      const elapsed = performance.now() - start;
-      let allDone = true;
-      const progress = RADAR_DIMS.map((_, i) => {
-        const localElapsed = Math.max(0, elapsed - i * STAGGER_MS);
-        const t = Math.min(localElapsed / VERTEX_DUR_MS, 1);
-        if (t < 1) allDone = false;
-        return easeOutCubic(t);
-      });
-      paint(progress);
-      if (!allDone) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
+
+    if (firstRunRef.current) {
+      // First mount — staggered reveal from center, one vertex at a time.
+      firstRunRef.current = false;
+      paintScores(RADAR_DIMS.map(() => 0));
+      const tick = () => {
+        const elapsed = performance.now() - start;
+        let allDone = true;
+        const vals = RADAR_DIMS.map((_, i) => {
+          const localElapsed = Math.max(0, elapsed - i * STAGGER_MS);
+          const t = Math.min(localElapsed / VERTEX_DUR_MS, 1);
+          if (t < 1) allDone = false;
+          return target[i] * easeOutCubic(t);
+        });
+        paintScores(vals);
+        if (!allDone) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    } else {
+      // Scores changed after mount (e.g. the AI/calibration toggle) — morph
+      // every vertex from where it currently sits to the new target.
+      const from = [...displayedRef.current];
+      const tick = () => {
+        const t = Math.min((performance.now() - start) / MORPH_MS, 1);
+        const e = easeInOutCubic(t);
+        paintScores(RADAR_DIMS.map((_, i) => from[i] + (target[i] - from[i]) * e));
+        if (t < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    }
+
     return () => cancelAnimationFrame(raf);
   }, [scores]);
 
@@ -213,6 +245,23 @@ export function ScoreRadar({ scores, className, ariaLabel }: RadarProps) {
           </text>
         );
       })}
+
+      {/* AI baseline — static dashed polygon beneath the calibrated shape.
+          Only drawn when baselineScores is supplied (i.e. a calibration
+          exists), so you can see what the AI scored vs. what you corrected. */}
+      {baselineScores && (
+        <polygon
+          points={RADAR_DIMS.map((d, i) =>
+            radarPoint(i, extractScore(baselineScores, d), R, CX, CY).join(','),
+          ).join(' ')}
+          fill="none"
+          stroke="var(--ink-3)"
+          strokeWidth={1}
+          strokeDasharray="3 3"
+          strokeLinejoin="round"
+          opacity={0.6}
+        />
+      )}
 
       {/* Score polygon — points mutated by the rAF animation */}
       <polygon
