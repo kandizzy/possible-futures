@@ -5,11 +5,16 @@ import { changeApplicationStatus } from '@/actions/applications';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Application } from '@/lib/types';
-import { isUnusualTransition, unusualTransitionReason } from '@/lib/status-order';
 import { EmptyState } from '@/components/layout/editorial';
 import { Select } from '@/components/layout/select';
+import { formatDate, type DateLocale } from '@/lib/format-date';
 
-const STATUSES = ['Submitted', 'Phone Screen', 'Interview', 'Take Home', 'Offer', 'Rejected', 'Withdrawn'];
+const STATUSES = ['Submitted', 'Phone Screen', 'Interview', 'Take Home', 'Offer', 'Rejected', 'Ghosted', 'Withdrawn'];
+
+// Shared column template for the header and every row, so the labels line up
+// with the data beneath them. Trailing tracks are fixed (not `auto`) because
+// the header and rows are separate grids — only fixed widths align across them.
+const GRID = 'grid-cols-[2.5rem_minmax(0,1fr)_4rem_8rem_8rem] gap-x-8';
 
 type AppWithRole = Application & { role_title: string; role_company: string };
 
@@ -27,6 +32,9 @@ function getAppStatusStyle(status: string): string {
       return 'text-stamp italic font-semibold';
     case 'Rejected':
       return 'text-ink-3 italic line-through decoration-ink-3/50';
+    case 'Ghosted':
+      // Limbo, not a conclusion — muted but no strikethrough.
+      return 'text-ink-3 italic';
     case 'Withdrawn':
       return 'text-ink-3 italic line-through decoration-ink-3/50';
     default:
@@ -34,12 +42,13 @@ function getAppStatusStyle(status: string): string {
   }
 }
 
-function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
+function ApplicationRow({ app, index, dateLocale }: { app: AppWithRole; index: number; dateLocale: DateLocale }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   // Picking a new status doesn't commit immediately — it opens a note panel
   // so the change can carry a record (e.g. what a recruiter said). The note
-  // is optional; the status only commits on Save.
+  // is optional: Save it to put the moment on the timeline, or Skip and the
+  // status still changes without landing in history.
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [note, setNote] = useState('');
 
@@ -54,13 +63,13 @@ function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
     setNote('');
   }
 
-  function commitChange() {
+  function commitChange(withNote: boolean) {
     if (!pendingStatus) return;
     startTransition(async () => {
       const formData = new FormData();
       formData.set('app_id', String(app.id));
       formData.set('status', pendingStatus);
-      if (note.trim()) formData.set('note', note.trim());
+      if (withNote && note.trim()) formData.set('note', note.trim());
       await changeApplicationStatus(formData);
       setPendingStatus(null);
       setNote('');
@@ -70,7 +79,7 @@ function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
 
   return (
     <li className="catalog-row py-5 px-1 hover:bg-paper-2/50 transition-colors">
-      <div className="hidden md:grid grid-cols-[2.5rem_1fr_auto_auto_auto] items-center gap-x-8">
+      <div className={`hidden md:grid ${GRID} items-center`}>
         <span className="font-mono tabular text-[10px] text-ink-3 self-start pt-1.5">
           {String(index).padStart(2, '0')}
         </span>
@@ -99,20 +108,22 @@ function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
           {app.resume_version_used || '—'}
         </div>
 
-        <div className="font-mono tabular text-[10px] text-ink-2 w-20 text-right">
-          {app.date_applied || '—'}
+        <div className="font-mono tabular text-[10px] text-ink-2 text-right">
+          {app.date_applied ? formatDate(app.date_applied, dateLocale) : '—'}
         </div>
 
-        <Select
-          variant="inline"
-          value={app.current_status}
-          onChange={handleStatusPick}
-          disabled={isPending}
-          aria-label={`Status for ${app.role_title} at ${app.role_company}`}
-          className={`font-serif text-[14px] text-right hover:text-stamp transition-colors min-w-[8rem] ${getAppStatusStyle(app.current_status)}`}
-          style={{ fontVariationSettings: '"opsz" 14, "SOFT" 50' }}
-          options={STATUSES.map((s) => ({ value: s, label: s.toLowerCase() }))}
-        />
+        <div className="flex justify-end">
+          <Select
+            variant="inline"
+            value={app.current_status}
+            onChange={handleStatusPick}
+            disabled={isPending}
+            aria-label={`Status for ${app.role_title} at ${app.role_company}`}
+            className={`font-serif text-[14px] text-right hover:text-stamp transition-colors ${getAppStatusStyle(app.current_status)}`}
+            style={{ fontVariationSettings: '"opsz" 14, "SOFT" 50' }}
+            options={STATUSES.map((s) => ({ value: s, label: s.toLowerCase() }))}
+          />
+        </div>
       </div>
 
       {/* Mobile stacked */}
@@ -145,7 +156,7 @@ function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
         </Link>
         <div className="mt-2 flex flex-wrap items-baseline gap-x-4 text-[10px] text-ink-3 font-mono tabular">
           <span>{app.resume_version_used || '—'}</span>
-          <span>{app.date_applied || 'not sent'}</span>
+          <span>{app.date_applied ? formatDate(app.date_applied, dateLocale) : 'not sent'}</span>
         </div>
         {app.next_steps && (
           <p
@@ -159,28 +170,14 @@ function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
 
       {/* Note panel — revealed after a new status is picked, before commit */}
       {pendingStatus && (
-        <div
-          className={`mt-4 border-t pt-4 ${
-            isUnusualTransition(app.current_status, pendingStatus)
-              ? 'border-stamp/40'
-              : 'border-rule-soft'
-          }`}
-        >
+        <div className="mt-4 border-t border-rule-soft pt-4">
           <div className="smallcaps text-[9px] text-ink-3 mb-2">
             {app.current_status.toLowerCase()} → {pendingStatus.toLowerCase()}
           </div>
-          {isUnusualTransition(app.current_status, pendingStatus) && (
-            <p
-              className="mb-2 font-serif italic text-[12px] text-stamp leading-snug"
-              style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
-            >
-              {unusualTransitionReason(app.current_status, pendingStatus)} Confirm to continue.
-            </p>
-          )}
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Add a note for this change — optional"
+            placeholder="Note this change for your journey — or skip it"
             rows={3}
             autoFocus
             disabled={isPending}
@@ -190,17 +187,25 @@ function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
           <div className="mt-2 flex items-center gap-4">
             <button
               type="button"
-              onClick={commitChange}
-              disabled={isPending}
-              className="btn-stamp text-[12px]"
+              onClick={() => commitChange(true)}
+              disabled={isPending || !note.trim()}
+              className="btn-stamp text-[12px] disabled:opacity-40"
             >
-              {isPending ? 'Saving' : 'Save change'}
+              {isPending ? 'Saving' : 'Save note'}
+            </button>
+            <button
+              type="button"
+              onClick={() => commitChange(false)}
+              disabled={isPending}
+              className="btn-link text-[12px]"
+            >
+              skip
             </button>
             <button
               type="button"
               onClick={cancelChange}
               disabled={isPending}
-              className="btn-link text-[12px]"
+              className="btn-link text-[12px] text-ink-3 ml-auto"
             >
               cancel
             </button>
@@ -211,7 +216,13 @@ function ApplicationRow({ app, index }: { app: AppWithRole; index: number }) {
   );
 }
 
-export function ApplicationsList({ applications }: { applications: AppWithRole[] }) {
+export function ApplicationsList({
+  applications,
+  dateLocale,
+}: {
+  applications: AppWithRole[];
+  dateLocale: DateLocale;
+}) {
   if (applications.length === 0) {
     return (
       <EmptyState
@@ -222,21 +233,23 @@ export function ApplicationsList({ applications }: { applications: AppWithRole[]
     );
   }
 
+  const count = `${applications.length} ${applications.length === 1 ? 'letter' : 'letters'}`;
+
   return (
     <div>
-      <div className="flex items-baseline justify-between mb-2">
-        <div className="smallcaps text-[9px] text-ink-3">
-          {applications.length} {applications.length === 1 ? 'letter' : 'letters'}
-        </div>
-        <div className="hidden md:flex smallcaps text-[9px] text-ink-3 gap-10">
-          <span>Ver.</span>
-          <span>Date</span>
-          <span>Status</span>
-        </div>
+      {/* Mobile: just the count. Desktop: column headers aligned to the row
+          grid via the shared GRID template. */}
+      <div className="smallcaps text-[9px] text-ink-3 mb-2 md:hidden">{count}</div>
+      <div className={`hidden md:grid ${GRID} items-baseline mb-2 px-1 smallcaps text-[9px] text-ink-3`}>
+        <span className="whitespace-nowrap">{count}</span>
+        <span />
+        <span>Ver.</span>
+        <span className="text-right">Date</span>
+        <span className="text-right">Status</span>
       </div>
       <ol className="divide-y divide-rule-soft border-t border-b border-rule-soft">
         {applications.map((app, i) => (
-          <ApplicationRow key={app.id} app={app} index={i + 1} />
+          <ApplicationRow key={app.id} app={app} index={i + 1} dateLocale={dateLocale} />
         ))}
       </ol>
     </div>

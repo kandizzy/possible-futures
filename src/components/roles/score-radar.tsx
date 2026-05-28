@@ -60,7 +60,7 @@ type RadarProps = {
 
 // Compact version for dashboard rows — hex scaffold + polygon only, no labels.
 // Stays static (no animation) so a page full of these doesn't visually thrash.
-export function ScoreRadarMini({ scores, className, ariaLabel }: RadarProps) {
+export function ScoreRadarMini({ scores, baselineScores, className, ariaLabel }: RadarProps) {
   const total = getTotalScore(scores);
   const color = radarColor(total);
   const R = 22, CX = 30, CY = 30;
@@ -69,6 +69,11 @@ export function ScoreRadarMini({ scores, className, ariaLabel }: RadarProps) {
   const scorePoints = RADAR_DIMS.map((d, i) =>
     radarPoint(i, extractScore(scores, d), R, CX, CY).join(','),
   ).join(' ');
+  const baselinePoints = baselineScores
+    ? RADAR_DIMS.map((d, i) =>
+        radarPoint(i, extractScore(baselineScores, d), R, CX, CY).join(','),
+      ).join(' ')
+    : null;
 
   return (
     <svg
@@ -78,6 +83,18 @@ export function ScoreRadarMini({ scores, className, ariaLabel }: RadarProps) {
       aria-label={ariaLabel ?? `Score shape: total ${total} of 18`}
     >
       <polygon points={hexPoints} fill="none" stroke="var(--rule-soft)" strokeWidth={0.8} />
+      {/* Baseline overlay — a thin solid faint line at mini scale (dashing
+          reads as noise this small). Drawn beneath the main polygon. */}
+      {baselinePoints && (
+        <polygon
+          points={baselinePoints}
+          fill="none"
+          stroke="var(--ink-3)"
+          strokeWidth={0.7}
+          opacity={0.45}
+          strokeLinejoin="round"
+        />
+      )}
       <polygon
         points={scorePoints}
         fill={color}
@@ -119,7 +136,11 @@ export function ScoreRadar({ scores, baselineScores, className, ariaLabel }: Rad
   // Score values currently drawn — lets a morph start from wherever the
   // polygon actually is, rather than snapping.
   const displayedRef = useRef<number[]>(RADAR_DIMS.map(() => 0));
-  const firstRunRef = useRef(true);
+  // Set true only when a staggered reveal has *completed*. A canceled reveal
+  // (StrictMode's double-effect on mount in dev) leaves this false so the
+  // second effect run still runs the stagger instead of falling through to
+  // the simultaneous morph branch.
+  const revealedRef = useRef(false);
 
   useEffect(() => {
     const reduced =
@@ -146,16 +167,18 @@ export function ScoreRadar({ scores, baselineScores, className, ariaLabel }: Rad
 
     if (reduced) {
       paintScores(target);
-      firstRunRef.current = false;
+      revealedRef.current = true;
       return;
     }
 
     const start = performance.now();
     let raf = 0;
 
-    if (firstRunRef.current) {
-      // First mount — staggered reveal from center, one vertex at a time.
-      firstRunRef.current = false;
+    if (!revealedRef.current) {
+      // First time animating to a target — staggered reveal from center,
+      // one vertex at a time. Marked complete only when every vertex has
+      // arrived; if cleanup cancels this rAF early, the next effect run
+      // re-enters here rather than morphing.
       paintScores(RADAR_DIMS.map(() => 0));
       const tick = () => {
         const elapsed = performance.now() - start;
@@ -167,7 +190,11 @@ export function ScoreRadar({ scores, baselineScores, className, ariaLabel }: Rad
           return target[i] * easeOutCubic(t);
         });
         paintScores(vals);
-        if (!allDone) raf = requestAnimationFrame(tick);
+        if (allDone) {
+          revealedRef.current = true;
+        } else {
+          raf = requestAnimationFrame(tick);
+        }
       };
       raf = requestAnimationFrame(tick);
     } else {

@@ -87,9 +87,10 @@ export async function overrideRecommendation(formData: FormData): Promise<{ succ
 export async function updateStatus(formData: FormData): Promise<{ success: boolean; error?: string }> {
   const roleId = Number(formData.get('role_id'));
   const status = formData.get('status') as string;
-  // Optional note — only meaningful for statuses that land on the
-  // application timeline (Applied / Interviewing / Offer / Rejected /
-  // Withdrawn). Ignored for New / Ghosted / Skipped.
+  // Optional note for this change. When present, it's recorded on the
+  // application timeline; when skipped, the status still changes but nothing
+  // is logged. Only statuses that map into the application lifecycle can
+  // carry a timeline event (see ROLE_TO_APP_STATUS below).
   const note = (formData.get('note') as string)?.trim();
   if (!roleId || !status) return { success: false, error: 'Missing fields.' };
   if (!VALID_STATUSES.has(status)) return { success: false, error: 'Invalid status.' };
@@ -126,10 +127,9 @@ export async function updateStatus(formData: FormData): Promise<{ success: boole
            date_applied = COALESCE(date_applied, ?)
        WHERE id = ?`,
     ).run(newAppStatus, today, appId);
-    // Record the synced change on the timeline so a status set via the role's
-    // StatusSelect still shows up in the application's history — with the
-    // note when one was given.
-    insertApplicationEvent({ application_id: appId, status: newAppStatus, note: note || null });
+    // Record the synced change on the timeline only when the user gave a
+    // note — a skipped change still moves the status but stays out of history.
+    if (note) insertApplicationEvent({ application_id: appId, status: newAppStatus, note });
     revalidatePath('/applications');
   }
 

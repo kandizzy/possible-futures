@@ -2,11 +2,13 @@ import Link from 'next/link';
 import { getAllApplications, getArchivedApplicationCount } from '@/lib/queries/applications';
 import { ApplicationsList } from '@/components/applications/applications-list';
 import { PageHeader, LedgerStat, LedgerDivider } from '@/components/layout/editorial';
+import { getDateFormat } from '@/lib/queries/compass';
 
 const INTERVIEW_STATUSES = new Set(['Phone Screen', 'Interview', 'Take Home']);
 
 export default function ApplicationsPage() {
   const applications = getAllApplications();
+  const dateLocale = getDateFormat();
   const submittedCount = applications.filter((a) => a.current_status === 'Submitted').length;
   const interviewingCount = applications.filter((a) => INTERVIEW_STATUSES.has(a.current_status)).length;
   const archivedCount = getArchivedApplicationCount();
@@ -42,7 +44,7 @@ export default function ApplicationsPage() {
       )}
 
       <div className="rise" style={{ animationDelay: '140ms' }}>
-        <ApplicationsList applications={applications} />
+        <ApplicationsList applications={applications} dateLocale={dateLocale} />
       </div>
     </div>
   );

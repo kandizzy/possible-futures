@@ -30,16 +30,18 @@ describe('changeApplicationStatus', () => {
     expect(last.note).toBe('recruiter reached out');
   });
 
-  it('records an event even when no note is given', async () => {
+  it('changes status without recording an event when no note is given', async () => {
     const roleId = insertTestRole();
     const appId = insertApplication({ role_id: roleId, current_status: 'Submitted' });
 
-    await changeApplicationStatus(makeFormData({ app_id: String(appId), status: 'Rejected' }));
+    const res = await changeApplicationStatus(
+      makeFormData({ app_id: String(appId), status: 'Rejected' }),
+    );
+    expect(res.success).toBe(true);
 
-    const events = getApplicationEvents(appId);
-    const last = events[events.length - 1];
-    expect(last.status).toBe('Rejected');
-    expect(last.note).toBeNull();
+    // The status moves, but a skipped (note-less) change leaves no trace.
+    expect(getApplicationByRoleId(roleId)!.current_status).toBe('Rejected');
+    expect(getApplicationEvents(appId)).toHaveLength(0);
   });
 
   it('rejects an invalid status without recording an event', async () => {
@@ -55,14 +57,14 @@ describe('changeApplicationStatus', () => {
 });
 
 describe('createApplication', () => {
-  it('seeds the timeline with a Submitted event', async () => {
+  it('creates a Submitted application without seeding a timeline event', async () => {
     const roleId = insertTestRole();
     const res = await createApplication(makeFormData({ role_id: String(roleId) }));
     expect(res.success).toBe(true);
 
     const app = getApplicationByRoleId(roleId)!;
-    const events = getApplicationEvents(app.id);
-    expect(events).toHaveLength(1);
-    expect(events[0].status).toBe('Submitted');
+    expect(app.current_status).toBe('Submitted');
+    // History is opt-in — creating an application doesn't auto-log anything.
+    expect(getApplicationEvents(app.id)).toHaveLength(0);
   });
 });

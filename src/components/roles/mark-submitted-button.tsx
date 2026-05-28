@@ -90,7 +90,7 @@ export function MarkSubmittedButton({
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Add a note for this change — optional"
+          placeholder="Note this change for your journey — or skip it"
           rows={3}
           autoFocus
           disabled={isPending}

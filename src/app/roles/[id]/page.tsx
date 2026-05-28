@@ -133,7 +133,7 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
                   />
                 </MetaRow>
                 <MetaRow label="Status">
-                  <StatusSelect roleId={role.id} currentStatus={role.status} withNote />
+                  <StatusSelect roleId={role.id} currentStatus={role.status} />
                 </MetaRow>
                 {role.recommended_resume_version && (
                   <MetaRow label="Resume version">
@@ -334,6 +334,15 @@ export default async function RoleDetailPage({ params }: { params: Promise<{ id:
               );
             })}
           </ol>
+          <p
+            className="mt-4 font-serif italic text-[12px] text-ink-3 leading-snug"
+            style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
+          >
+            Your calibrations mark the total score with{' '}
+            <span className="not-italic text-stamp">*</span>. Click the total to
+            toggle the radar between the AI&rsquo;s baseline and your calibrated
+            view.
+          </p>
         </Section>
       )}
 

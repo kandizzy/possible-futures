@@ -36,7 +36,18 @@ export function formatDate(
   locale: DateLocale = 'us',
 ): string {
   if (!input) return '';
-  const d = input instanceof Date ? input : new Date(input);
+  let d: Date;
+  if (input instanceof Date) {
+    d = input;
+  } else if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
+    // Date-only strings (e.g. date_applied "2026-05-02") parse as UTC
+    // midnight, which renders as the previous day in negative-offset
+    // timezones. Build from local parts so the day doesn't shift.
+    const [y, m, day] = input.split('-').map(Number);
+    d = new Date(y, m - 1, day);
+  } else {
+    d = new Date(input);
+  }
   if (Number.isNaN(d.getTime())) {
     return typeof input === 'string' ? input : '';
   }

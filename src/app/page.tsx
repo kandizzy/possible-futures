@@ -14,6 +14,7 @@ import { getCompanyByName } from '@/lib/queries/companies';
 import { reapOrphanedRuns } from '@/lib/queries/discovery';
 import type { RoleStatus } from '@/lib/types';
 import { RoleRow } from '@/components/roles/role-row';
+import { ROW_GRID } from '@/components/roles/row-grid';
 import { StatusFilterBar, type FilterOption } from '@/components/dashboard/status-filter-bar';
 import Link from 'next/link';
 
@@ -168,15 +169,21 @@ export default async function DashboardPage({
           </div>
         ) : (
           <>
-            <div className="flex items-baseline justify-between mb-2">
-              <div className="smallcaps text-[9px] text-ink-3">
+            {/* Mobile: just the count. Desktop: column headers aligned to the
+                row grid — "Score" over the shape, "Status" over the picker. */}
+            <div className="smallcaps text-[9px] text-ink-3 mb-2 md:hidden">
+              {roles.length} {roles.length === 1 ? 'entry' : 'entries'}
+              {statusFilter !== 'All' && ` · ${statusFilter}`}
+            </div>
+            <div className={`hidden md:grid ${ROW_GRID} items-baseline mb-2 px-1 smallcaps text-[9px] text-ink-3`}>
+              <span className="whitespace-nowrap">
                 {roles.length} {roles.length === 1 ? 'entry' : 'entries'}
                 {statusFilter !== 'All' && ` · ${statusFilter}`}
-              </div>
-              <div className="hidden md:flex smallcaps text-[9px] text-ink-3 gap-8">
-                <span>Score</span>
-                <span>Status</span>
-              </div>
+              </span>
+              <span />
+              <span className="text-center">Score</span>
+              <span />
+              <span className="text-right">Status</span>
             </div>
             <ol className="divide-y divide-rule-soft border-t border-b border-rule-soft">
               {roles.map((role, i) => (

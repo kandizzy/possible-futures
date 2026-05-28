@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { getTotalScore, getScoreColor } from '@/lib/types';
+import { getTotalScore, getScoreColor, getEffectiveScores } from '@/lib/types';
 import { StatusSelect } from './status-select';
 import { ScoreRadarMini } from './score-radar';
 import type { Role } from '@/lib/types';
+import { ROW_GRID } from './row-grid';
 
 export function RoleRow({
   role,
@@ -15,7 +16,13 @@ export function RoleRow({
   index: number;
   versionLabels: Record<string, string>;
 }) {
-  const total = getTotalScore(role.ai_scores);
+  // Dashboard shows the effective (calibration-applied) shape and total.
+  // The AI shape is drawn underneath as a thin faint baseline so a
+  // calibration is visible in the row at a glance.
+  const effectiveScores = getEffectiveScores(role.ai_scores, role.my_scores);
+  const hasCalibration =
+    role.my_scores != null && Object.keys(role.my_scores).length > 0;
+  const total = getTotalScore(effectiveScores);
   const scoreCls = getScoreColor(total);
   const versionLabel = role.recommended_resume_version
     ? versionLabels[role.recommended_resume_version] || role.recommended_resume_version
@@ -24,7 +31,7 @@ export function RoleRow({
   return (
     <li className="catalog-row py-5 md:py-6 px-1 hover:bg-paper-2/60 transition-colors">
       {/* Desktop layout — 5-col grid */}
-      <div className="hidden md:grid grid-cols-[2.5rem_1fr_auto_auto_auto] items-center gap-x-8">
+      <div className={`hidden md:grid ${ROW_GRID} items-center`}>
         <span className="font-mono tabular text-[10px] text-ink-3 self-start pt-2">
           {String(index).padStart(2, '0')}
         </span>
@@ -62,7 +69,8 @@ export function RoleRow({
 
         <div className="flex justify-end shrink-0">
           <ScoreRadarMini
-            scores={role.ai_scores}
+            scores={effectiveScores}
+            baselineScores={hasCalibration ? role.ai_scores : undefined}
             className="w-[52px] h-[52px]"
             ariaLabel={`Score shape for ${role.company}: ${total} of 18`}
           />
@@ -114,7 +122,8 @@ export function RoleRow({
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <ScoreRadarMini
-              scores={role.ai_scores}
+              scores={effectiveScores}
+              baselineScores={hasCalibration ? role.ai_scores : undefined}
               className="w-10 h-10"
               ariaLabel={`Score shape for ${role.company}: ${total} of 18`}
             />

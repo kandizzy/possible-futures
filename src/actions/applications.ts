@@ -6,7 +6,7 @@ import { updateRoleStatus, getRoleById } from '@/lib/queries/roles';
 import { getDb } from '@/lib/db';
 import type { ResumeVersion, RoleStatus } from '@/lib/types';
 
-const VALID_APP_STATUSES = new Set(['Submitted', 'Phone Screen', 'Interview', 'Take Home', 'Offer', 'Rejected', 'Withdrawn']);
+const VALID_APP_STATUSES = new Set(['Submitted', 'Phone Screen', 'Interview', 'Take Home', 'Offer', 'Rejected', 'Ghosted', 'Withdrawn']);
 
 // Mirror the inverse of the role→app mapping in calibrate.ts:updateStatus, so
 // changing the app status from the Applications page keeps the role status in
@@ -20,6 +20,7 @@ const APP_TO_ROLE_STATUS: Record<string, RoleStatus | null> = {
   'Take Home': 'Interviewing',
   Offer: 'Offer',
   Rejected: 'Rejected',
+  Ghosted: 'Ghosted',
   Withdrawn: 'Withdrawn',
 };
 
@@ -38,8 +39,6 @@ export async function createApplication(formData: FormData): Promise<{ success: 
     current_status: 'Submitted',
     notes: notes || undefined,
   });
-  // Seed the status timeline with the application's first state.
-  insertApplicationEvent({ application_id: appId, status: 'Submitted' });
 
   // Also update role status
   updateRoleStatus(roleId, 'Applied');
@@ -54,8 +53,10 @@ export async function changeApplicationStatus(formData: FormData): Promise<{ suc
   const appId = Number(formData.get('app_id'));
   const status = formData.get('status') as string;
   const nextSteps = (formData.get('next_steps') as string)?.trim();
-  // Optional human note attached to this specific status change — recorded
-  // on the timeline event, distinct from the application's next_steps field.
+  // Optional human note attached to this specific status change. A change
+  // only lands on the timeline when it carries a note — skipped changes move
+  // the status but leave no trace, keeping history a curated journey rather
+  // than a mechanical log.
   const note = (formData.get('note') as string)?.trim();
 
   if (!appId || !status) {
@@ -68,7 +69,7 @@ export async function changeApplicationStatus(formData: FormData): Promise<{ suc
 
   try {
     updateApplicationStatus(appId, status, nextSteps || undefined);
-    insertApplicationEvent({ application_id: appId, status, note: note || null });
+    if (note) insertApplicationEvent({ application_id: appId, status, note });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return { success: false, error: `Failed to update status: ${message}` };
@@ -106,7 +107,7 @@ export async function markApplicationSubmitted(formData: FormData): Promise<{ su
   db.prepare(
     "UPDATE applications SET current_status = 'Submitted', date_applied = ? WHERE id = ?",
   ).run(today, appId);
-  insertApplicationEvent({ application_id: appId, status: 'Submitted', note: note || null });
+  if (note) insertApplicationEvent({ application_id: appId, status: 'Submitted', note });
   updateRoleStatus(roleId, 'Applied');
 
   revalidatePath('/');
@@ -128,7 +129,6 @@ export async function unmarkApplicationSubmitted(formData: FormData): Promise<{ 
   db.prepare(
     "UPDATE applications SET current_status = 'Draft', date_applied = NULL WHERE id = ?",
   ).run(app.id);
-  insertApplicationEvent({ application_id: app.id, status: 'Draft' });
 
   revalidatePath('/');
   revalidatePath('/applications');

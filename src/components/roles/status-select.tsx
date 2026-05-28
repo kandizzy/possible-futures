@@ -4,7 +4,6 @@ import { useState, useTransition } from 'react';
 import { updateStatus } from '@/actions/calibrate';
 import { getStatusStyle } from '@/lib/types';
 import type { RoleStatus } from '@/lib/types';
-import { isUnusualTransition, unusualTransitionReason } from '@/lib/status-order';
 import { useRouter } from 'next/navigation';
 import { Select } from '@/components/layout/select';
 
@@ -19,31 +18,19 @@ const STATUSES: RoleStatus[] = [
   'Skipped',
 ];
 
-// Role statuses that land on the application journey — these map to an
-// application status, create a timeline event, and (when withNote is on)
-// offer an optional note. New / Ghosted / Skipped change status silently.
-const NOTABLE = new Set<RoleStatus>([
-  'Applied',
-  'Interviewing',
-  'Offer',
-  'Rejected',
-  'Withdrawn',
-]);
-
 export function StatusSelect({
   roleId,
   currentStatus,
-  withNote = false,
 }: {
   roleId: number;
   currentStatus: RoleStatus;
-  // When true, picking an interview-space status reveals an optional note
-  // field before committing. Off by default so compact surfaces (dashboard
-  // rows) stay a quick flip.
-  withNote?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  // The status the user just picked, awaiting commit. Picking a status never
+  // blocks and never warns — it just opens an invitation to note the change.
+  // You either Save a note (recorded on the timeline) or Skip (the change
+  // still happens, it just doesn't land in history).
   const [pending, setPending] = useState<RoleStatus | null>(null);
   const [note, setNote] = useState('');
 
@@ -63,20 +50,9 @@ export function StatusSelect({
   function handlePick(value: string) {
     const status = value as RoleStatus;
     if (status === currentStatus) return;
-    const wantsNote = withNote && NOTABLE.has(status);
-    const unusual = isUnusualTransition(currentStatus, status);
-    // Open the panel to collect a note, to confirm an unusual move, or both.
-    // A plain, sensible change with no note to give just commits.
-    if (wantsNote || unusual) {
-      setNote('');
-      setPending(status);
-    } else {
-      commit(status);
-    }
+    setNote('');
+    setPending(status);
   }
-
-  const unusual = pending ? isUnusualTransition(currentStatus, pending) : false;
-  const showNote = pending ? withNote && NOTABLE.has(pending) : false;
 
   return (
     <div className="flex flex-col gap-2">
@@ -92,40 +68,36 @@ export function StatusSelect({
       />
 
       {pending && (
-        <div
-          className={`border-l-2 pl-3 py-1 ${unusual ? 'border-stamp' : 'border-rule'}`}
-        >
+        <div className="border-l-2 border-rule pl-3 py-1">
           <div className="smallcaps text-[9px] text-ink-3 mb-1.5">
             {currentStatus.toLowerCase()} → {pending.toLowerCase()}
           </div>
-          {unusual && (
-            <p
-              className="mb-2 font-serif italic text-[12px] text-stamp leading-snug"
-              style={{ fontVariationSettings: '"opsz" 12, "SOFT" 40' }}
-            >
-              {unusualTransitionReason(currentStatus, pending)} Confirm to continue.
-            </p>
-          )}
-          {showNote && (
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Add a note for this change — optional"
-              rows={3}
-              autoFocus
-              disabled={isPending}
-              className="field w-full font-serif text-[13px] leading-[1.6] resize-y"
-              style={{ fontVariationSettings: '"opsz" 13, "SOFT" 30' }}
-            />
-          )}
-          <div className={`flex items-center gap-4 ${showNote ? 'mt-2' : ''}`}>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Note this change for your journey — or skip it"
+            rows={3}
+            autoFocus
+            disabled={isPending}
+            className="field w-full font-serif text-[13px] leading-[1.6] resize-y"
+            style={{ fontVariationSettings: '"opsz" 13, "SOFT" 30' }}
+          />
+          <div className="mt-2 flex items-center gap-4">
             <button
               type="button"
-              onClick={() => commit(pending, showNote ? note : undefined)}
-              disabled={isPending}
-              className="btn-stamp text-[12px]"
+              onClick={() => commit(pending, note)}
+              disabled={isPending || !note.trim()}
+              className="btn-stamp text-[12px] disabled:opacity-40"
             >
-              {isPending ? 'Saving' : unusual && !showNote ? 'Confirm change' : 'Save change'}
+              {isPending ? 'Saving' : 'Save note'}
+            </button>
+            <button
+              type="button"
+              onClick={() => commit(pending)}
+              disabled={isPending}
+              className="btn-link text-[12px]"
+            >
+              skip
             </button>
             <button
               type="button"
@@ -134,7 +106,7 @@ export function StatusSelect({
                 setNote('');
               }}
               disabled={isPending}
-              className="btn-link text-[12px]"
+              className="btn-link text-[12px] text-ink-3 ml-auto"
             >
               cancel
             </button>
