@@ -17,10 +17,13 @@ export async function claudeCli(systemPrompt: string, userPrompt: string): Promi
 
     let stdout = '';
     let stderr = '';
+    const timeoutMs = 300_000;
     const timeout = setTimeout(() => {
       child.kill();
-      reject(new Error('Claude CLI timed out after 2 minutes. The prompt may be too large for CLI mode.'));
-    }, 120_000);
+      reject(new Error(
+        `Claude CLI timed out after ${timeoutMs / 1000}s. The prompt may be too large for CLI mode.`,
+      ));
+    }, timeoutMs);
 
     child.stdout.on('data', (data: Buffer) => { stdout += data.toString(); });
     child.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
